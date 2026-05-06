@@ -7,10 +7,10 @@ NAME = MINTI
 DESCRIPTION = "MinTI-Chess is a strong chess engine written for the TI-84 Plus CE"
 COMPRESSED = NO
 
-CFLAGS = -Wall -Wextra -Os
-CXXFLAGS = -Wall -Wextra -Os
+CFLAGS = -Wall -Wextra -Os -save-temps
+CXXFLAGS = -Wall -Wextra -Os -save-temps
 
-LTO = YES
+LTO = NO
 
 # ----------------------------
 

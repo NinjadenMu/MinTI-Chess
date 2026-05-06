@@ -15,6 +15,8 @@
 #define W_OFFSET (-1)
 #define NW_OFFSET (-17)
 
-typedef Move MoveListStack[MAX_DEPTH * 32];
+extern Move move_pool[MAX_PLY * SAFE_MOVES_PER_PLY];
+
+extern Move *current_move_ptr;
 
 #endif

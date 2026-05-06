@@ -10,14 +10,6 @@
 #define HAS_ATEXIT 0
 #ifdef __ASSEMBLER__
 .macro LIBLOAD_LIBS
-	.global __libload_library_FILEIOC
-	.type __libload_library_FILEIOC, @object
-__libload_library_FILEIOC:
-	.db 0xC0, "FILEIOC", 0, 8
-	.global _ti_PutC
-	.type _ti_PutC, @function
-_ti_PutC:
-	jp 21
 .endm
 #endif
-#define HAS_LIBLOAD 1
+#define HAS_LIBLOAD 0
