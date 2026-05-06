@@ -4,6 +4,9 @@ Merging object attributes
 
 Discarded input sections
 
+ .comment       0x00000000       0x70 obj/MINTI.o
+ .note.GNU-stack
+                0x00000000        0x0 obj/MINTI.o
  .init.weak_crt
                 0x00000000       0x10 obj/MINTI.o
  .text          0x00000000        0x0 obj/crt0.o
@@ -42,42 +45,71 @@ Linker script and memory map
                 0x00d1a96e                ___exithl
                 0x00d1a96f                _exit.sp
 
-.text
+.text           0x00d1a9aa      0xfd1
  *(.text.unlikely .text.*_unlikely .text.unlikely.*)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
  *(.text.hot .text.hot.*)
  *(SORT_BY_NAME(.text.sorted.*))
  *(.text .stub .text.* .gnu.linkonce.t.*)
+ .text          0x00d1a9aa       0x5c obj/MINTI.o
+                0x00d1a9aa                __land
+                0x00d1a9ae                __iand
+                0x00d1a9c5                __sshl
+                0x00d1a9c5                __ishl
+                0x00d1a9eb                __lor
+                0x00d1a9ef                __ior
+ .text._main    0x00d1aa06      0x150 obj/MINTI.o
+                0x00d1aa06                _main
+ .text._generate_pawn_captures
+                0x00d1ab56      0x451 obj/MINTI.o
+ .text._generate_knight_captures
+                0x00d1afa7      0x135 obj/MINTI.o
+ .text._generate_bishop_captures
+                0x00d1b0dc      0x380 obj/MINTI.o
+ .text._generate_rook_captures
+                0x00d1b45c      0x380 obj/MINTI.o
+ .text._generate_queen_captures
+                0x00d1b7dc       0x6a obj/MINTI.o
+ .text._generate_king_captures
+                0x00d1b846      0x135 obj/MINTI.o
  *(.gnu.warning)
 
-.rodata         0x00d1a9aa       0x22
+.rodata         0x00d1b97b       0x22
  *(.rodata .rodata.* .gnu.linkonce.r.*)
  .rodata.libload
-                0x00d1a9aa       0x22 obj/crt0.o
+                0x00d1b97b       0x22 obj/crt0.o
 
-.init_array     0x00d1a9cc        0x0
+.init_array     0x00d1b99d        0x0
                 [!provide]                        PROVIDE (__init_array_start = .)
  *(.preinit_array)
  *(SORT_BY_INIT_PRIORITY(.init_array.*))
  *(.init_array)
                 [!provide]                        PROVIDE (__init_array_end = .)
 
-.fini_array     0x00d1a9cc        0x0
+.fini_array     0x00d1b99d        0x0
                 [!provide]                        PROVIDE (__fini_array_start = .)
  *(SORT_BY_INIT_PRIORITY(.fini_array.*))
  *(.fini_array)
                 [!provide]                        PROVIDE (__fini_array_end = .)
-                0x00d1a9cc                        ___data_low = .
+                0x00d1b99d                        ___data_low = .
 
-.data           0x00d1a9cc        0x0
+.data           0x00d1b99d       0x14
  *(.data .data.* .gnu.linkonce.d.*)
+ .data._w_pawn_capture_offsets
+                0x00d1b99d        0x2 obj/MINTI.o
+ .data._b_pawn_capture_offsets
+                0x00d1b99f        0x2 obj/MINTI.o
+ .data._knight_offsets
+                0x00d1b9a1        0x8 obj/MINTI.o
+ .data._king_offsets
+                0x00d1b9a9        0x8 obj/MINTI.o
  *(.data1)
-                0x00d1a9cc                        ___runprgm_reloc_start = .
+                0x00d1b9b1                        ___runprgm_reloc_start = .
  *(.runprgm.reloc)
-                0x00d1a9cc                        ___runprgm_reloc_end = .
-                0x00d1a9cc                        ___data_high = .
-                0x00000000                        ___data_len = (___data_high - ___data_low)
+                0x00d1b9b1                        ___runprgm_reloc_end = .
+                0x00d1b9b1                        ___data_high = .
+                0x00000014                        ___data_len = (___data_high - ___data_low)
                 0x00d052c6                        . = BSSHEAP_LOW
                 0x00d052c6                        ___bss_low = .
 
@@ -95,26 +127,38 @@ Linker script and memory map
 .runprgm
  *(.runprgm.reloc)
 
-.debug_info
+.debug_info     0x00000000      0x981
  *(.debug_info .debug_info.*)
+ .debug_info    0x00000000      0x981 obj/MINTI.o
 
-.debug_abbrev
+.debug_abbrev   0x00000000      0x154
  *(.debug_abbrev .debug_abbrev.*)
+ .debug_abbrev  0x00000000      0x154 obj/MINTI.o
 
-.debug_line
+.debug_line     0x00000000      0xa06
  *(.debug_line .debug_line.*)
+ .debug_line    0x00000000      0xa06 obj/MINTI.o
 
 .debug_line_str
+                0x00000000       0x6c
  *(.debug_line_str .debug_line_str.*)
+ .debug_line_str
+                0x00000000       0x6c obj/MINTI.o
 
-.debug_str
+.debug_str      0x00000000      0x33e
  *(.debug_str .debug_str.*)
+ .debug_str     0x00000000      0x33e obj/MINTI.o
+                                0x363 (size before relaxing)
 
 .debug_str_offsets
+                0x00000000       0xf0
  *(.debug_str_offsets .debug_str_offsets.*)
+ .debug_str_offsets
+                0x00000000       0xf0 obj/MINTI.o
 
-.debug_addr
+.debug_addr     0x00000000       0xb0
  *(.debug_addr .debug_addr.*)
+ .debug_addr    0x00000000       0xb0 obj/MINTI.o
 
 .debug_aranges
  *(.debug_aranges .debug_aranges.*)
@@ -123,7 +167,10 @@ Linker script and memory map
  *(.debug_ranges .debug_ranges.*)
 
 .debug_rnglists
+                0x00000000       0x2c
  *(.debug_rnglists .debug_rnglists.*)
+ .debug_rnglists
+                0x00000000       0x2c obj/MINTI.o
 
 .debug_loc
  *(.debug_loc .debug_loc.*)

@@ -7,6 +7,8 @@
 
 #define GET_COLOR(piece) (((piece) & 1) ? WHITE : BLACK)
 
+#define CREATE_FLAGS(promotion_piece_type, en_passant) ((promotion_piece_type) << 4 | (en_passant) << 3)
+
 /*
 #define GET_FROM_SQUARE(move) (((move) >> 16) & 0xFF)
 #define GET_TO_SQUARE(move) (((move) >> 8) & 0xFF)
