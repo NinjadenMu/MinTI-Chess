@@ -5,14 +5,23 @@
 #include <stdbool.h>
 
 typedef enum {WHITE, BLACK} Color;
+typedef enum {CAPTURES, MOVES} Stage;
 
 typedef uint8_t Square;
 typedef uint8_t Piece;
 typedef uint24_t Move;
 typedef uint8_t Flags;
-
 typedef Piece Board[128];
-typedef Piece PieceList[2][16];
+typedef struct {
+  Piece piece;
+  Square square;
+} PieceInfo;
+typedef struct {
+  PieceInfo w_piece_list[16];
+  PieceInfo b_piece_list[16];
+  uint8_t w_end;
+  uint8_t b_end;
+} PieceList;
 
 typedef struct {
   Board board;

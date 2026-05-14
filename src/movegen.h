@@ -19,4 +19,6 @@ extern Move move_pool[MAX_PLY * SAFE_MOVES_PER_PLY];
 
 extern Move *current_move_ptr;
 
+Move *generate_moves(State *state, PieceList *piece_list, Stage stage, Move *move_list);
+
 #endif

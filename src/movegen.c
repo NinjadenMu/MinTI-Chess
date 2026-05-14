@@ -9,10 +9,10 @@ State state;
 
 Move move_pool[MAX_PLY * SAFE_MOVES_PER_PLY];
 
-static int8_t w_pawn_capture_offsets[2] = {NE_OFFSET, NW_OFFSET};
-static int8_t b_pawn_capture_offsets[2] = {SE_OFFSET, SW_OFFSET};
-static int8_t knight_offsets[8] = {-14, -18, -31, -33, 14, 18, 31, 33};
-static int8_t king_offsets[8] = {N_OFFSET, NE_OFFSET, E_OFFSET, SE_OFFSET, 
+static const int8_t w_pawn_capture_offsets[2] = {NE_OFFSET, NW_OFFSET};
+static const int8_t b_pawn_capture_offsets[2] = {SE_OFFSET, SW_OFFSET};
+static const int8_t knight_offsets[8] = {-14, -18, -31, -33, 14, 18, 31, 33};
+static const int8_t king_offsets[8] = {N_OFFSET, NE_OFFSET, E_OFFSET, SE_OFFSET, 
                                  S_OFFSET, SW_OFFSET, W_OFFSET, NW_OFFSET};
 
 INLINE Move *add_move(Square from_square, Square to_square, Flags flags, Move *move_list) {
@@ -27,7 +27,7 @@ INLINE Move *add_move(Square from_square, Square to_square, Flags flags, Move *m
   return move_list + 1;
 }
 
-INLINE Move *generate_stepping_captures(State *state, Square square, int8_t offset, Move *move_list) {
+INLINE Move *generate_stepping_captures_at(State *state, Square square, int8_t offset, Move *move_list) {
   Square target = square + offset;
   if (!IS_OFF_BOARD(target)) {
     Piece target_piece = state->board[target];
@@ -41,7 +41,7 @@ INLINE Move *generate_stepping_captures(State *state, Square square, int8_t offs
   return move_list;
 }
 
-INLINE Move *generate_sliding_captures(State *state, Square square, int8_t offset, Move *move_list) {
+INLINE Move *generate_sliding_captures_at(State *state, Square square, int8_t offset, Move *move_list) {
   Square target = square + offset;
   Piece *board = state->board;
   while (!IS_OFF_BOARD(target)) {
@@ -63,7 +63,7 @@ INLINE Move *generate_sliding_captures(State *state, Square square, int8_t offse
   return move_list;
 }
 
-static Move *generate_pawn_captures(State *state, Square square, Move *move_list) {
+static Move *generate_pawn_captures_at(State *state, Square square, Move *move_list) {
   Color my_color = state->side_to_move;
   Square target;
   for (int i = 0; i < 2; i++) {
@@ -105,50 +105,50 @@ static Move *generate_pawn_captures(State *state, Square square, Move *move_list
   return move_list;
 }
 
-static Move *generate_knight_captures(State *state, Square square, Move *move_list) {
-  const int8_t *offset_ptr = knight_offsets;
+static Move *generate_knight_captures_at(State *state, Square square, Move *move_list) {
+  #pragma unroll
   for (uint8_t i = 0; i < 8; i++) {
-    move_list = generate_stepping_captures(state, square, *offset_ptr++, move_list);
+    move_list = generate_stepping_captures_at(state, square, knight_offsets[i], move_list);
   }
 
   return move_list;
 }
 
-static Move *generate_bishop_captures(State *state, Square square, Move *move_list) {
-  move_list = generate_sliding_captures(state, square, NE_OFFSET, move_list);
-  move_list = generate_sliding_captures(state, square, SE_OFFSET, move_list);
-  move_list = generate_sliding_captures(state, square, SW_OFFSET, move_list);
-  move_list = generate_sliding_captures(state, square, NW_OFFSET, move_list);
+static Move *generate_bishop_captures_at(State *state, Square square, Move *move_list) {
+  move_list = generate_sliding_captures_at(state, square, NE_OFFSET, move_list);
+  move_list = generate_sliding_captures_at(state, square, SE_OFFSET, move_list);
+  move_list = generate_sliding_captures_at(state, square, SW_OFFSET, move_list);
+  move_list = generate_sliding_captures_at(state, square, NW_OFFSET, move_list);
 
   return move_list;
 }
 
-static Move *generate_rook_captures(State *state, Square square, Move *move_list) {
-  move_list = generate_sliding_captures(state, square, N_OFFSET, move_list);
-  move_list = generate_sliding_captures(state, square, E_OFFSET, move_list);
-  move_list = generate_sliding_captures(state, square, S_OFFSET, move_list);
-  move_list = generate_sliding_captures(state, square, W_OFFSET, move_list);
+static Move *generate_rook_captures_at(State *state, Square square, Move *move_list) {
+  move_list = generate_sliding_captures_at(state, square, N_OFFSET, move_list);
+  move_list = generate_sliding_captures_at(state, square, E_OFFSET, move_list);
+  move_list = generate_sliding_captures_at(state, square, S_OFFSET, move_list);
+  move_list = generate_sliding_captures_at(state, square, W_OFFSET, move_list);
 
   return move_list;
 }
 
-static Move *generate_queen_captures(State *state, Square square, Move *move_list) {
-  move_list = generate_bishop_captures(state, square, move_list);
-  move_list = generate_rook_captures(state, square, move_list);
+static Move *generate_queen_captures_at(State *state, Square square, Move *move_list) {
+  move_list = generate_bishop_captures_at(state, square, move_list);
+  move_list = generate_rook_captures_at(state, square, move_list);
 
   return move_list;
 }
 
-static Move *generate_king_captures(State *state, Square square, Move *move_list) {
-  const int8_t *offset_ptr = king_offsets;
+static Move *generate_king_captures_at(State *state, Square square, Move *move_list) {
+  #pragma unroll
   for (uint8_t i = 0; i < 8; i++) {
-    move_list = generate_stepping_captures(state, square, *offset_ptr++, move_list);
+    move_list = generate_stepping_captures_at(state, square, king_offsets[i], move_list);
   }
 
   return move_list;
 }
 
-INLINE Move *generate_stepping_moves(State *state, Square square, int8_t offset, Move *move_list) {
+INLINE Move *generate_stepping_moves_at(State *state, Square square, int8_t offset, Move *move_list) {
   Square target = square + offset;
   if (!IS_OFF_BOARD(target)) {
     Piece target_piece = state->board[target];
@@ -160,7 +160,7 @@ INLINE Move *generate_stepping_moves(State *state, Square square, int8_t offset,
   return move_list;
 }
 
-INLINE Move *generate_sliding_moves(State *state, Square square, int8_t offset, Move *move_list) {
+INLINE Move *generate_sliding_moves_at(State *state, Square square, int8_t offset, Move *move_list) {
   Square target = square + offset;
   Piece *board = state->board;
   while (!IS_OFF_BOARD(target)) {
@@ -178,7 +178,7 @@ INLINE Move *generate_sliding_moves(State *state, Square square, int8_t offset, 
   return move_list;
 }
 
-static Move *generate_pawn_moves(State *state, Square square, Move *move_list) {
+static Move *generate_pawn_moves_at(State *state, Square square, Move *move_list) {
   if (state->side_to_move == WHITE) {
     Square target = square + N_OFFSET;
     if (state->board[target] == EMPTY) {
@@ -230,46 +230,46 @@ static Move *generate_pawn_moves(State *state, Square square, Move *move_list) {
   return move_list;
 }
 
-static Move *generate_knight_moves(State *state, Square square, Move *move_list) {
-  const int8_t *offset_ptr = knight_offsets;
+static Move *generate_knight_moves_at(State *state, Square square, Move *move_list) {
+  #pragma unroll
   for (uint8_t i = 0; i < 8; i++) {
-    move_list = generate_stepping_moves(state, square, *offset_ptr++, move_list);
+    move_list = generate_stepping_moves_at(state, square, knight_offsets[i], move_list);
   }
 
   return move_list;
 }
 
-static Move *generate_bishop_moves(State *state, Square square, Move *move_list) {
-  move_list = generate_sliding_moves(state, square, NE_OFFSET, move_list);
-  move_list = generate_sliding_moves(state, square, SE_OFFSET, move_list);
-  move_list = generate_sliding_moves(state, square, SW_OFFSET, move_list);
-  move_list = generate_sliding_moves(state, square, NW_OFFSET, move_list);
+static Move *generate_bishop_moves_at(State *state, Square square, Move *move_list) {
+  move_list = generate_sliding_moves_at(state, square, NE_OFFSET, move_list);
+  move_list = generate_sliding_moves_at(state, square, SE_OFFSET, move_list);
+  move_list = generate_sliding_moves_at(state, square, SW_OFFSET, move_list);
+  move_list = generate_sliding_moves_at(state, square, NW_OFFSET, move_list);
 
   return move_list;
 }
 
-static Move *generate_rook_moves(State *state, Square square, Move *move_list) {
-  move_list = generate_sliding_moves(state, square, N_OFFSET, move_list);
-  move_list = generate_sliding_moves(state, square, E_OFFSET, move_list);
-  move_list = generate_sliding_moves(state, square, S_OFFSET, move_list);
-  move_list = generate_sliding_moves(state, square, W_OFFSET, move_list);
+static Move *generate_rook_moves_at(State *state, Square square, Move *move_list) {
+  move_list = generate_sliding_moves_at(state, square, N_OFFSET, move_list);
+  move_list = generate_sliding_moves_at(state, square, E_OFFSET, move_list);
+  move_list = generate_sliding_moves_at(state, square, S_OFFSET, move_list);
+  move_list = generate_sliding_moves_at(state, square, W_OFFSET, move_list);
 
   return move_list;
 }
 
-static Move *generate_queen_moves(State *state, Square square, Move *move_list) {
-  move_list = generate_bishop_moves(state, square, move_list);
-  move_list = generate_rook_moves(state, square, move_list);
+static Move *generate_queen_moves_at(State *state, Square square, Move *move_list) {
+  move_list = generate_bishop_moves_at(state, square, move_list);
+  move_list = generate_rook_moves_at(state, square, move_list);
 
   return move_list;
 }
 
-static Move *generate_king_moves(State *state, Square square, Move *move_list) {
+static Move *generate_king_moves_at(State *state, Square square, Move *move_list) {
   Color my_color = state->side_to_move;
 
-  const int8_t *offset_ptr = king_offsets;
+  #pragma unroll
   for (uint8_t i = 0; i < 8; i++) {
-    move_list = generate_stepping_moves(state, square, *offset_ptr++, move_list);
+    move_list = generate_stepping_moves_at(state, square, king_offsets[i], move_list);
   }
 
   if (my_color == WHITE) {
@@ -309,16 +309,99 @@ static Move *generate_king_moves(State *state, Square square, Move *move_list) {
   return move_list;
 }
 
+Move *generate_moves(State *state, PieceList *piece_list, Stage stage, Move *move_list) {
+  uint8_t end;
+  PieceInfo *pieces;
+  if (state->side_to_move == WHITE) {
+    pieces = piece_list->w_piece_list;
+    end = piece_list->w_end;
+  }
+  else {
+    pieces = piece_list->b_piece_list;
+    end = piece_list->b_end;
+  }
+
+  if (stage == CAPTURES) {
+    for (uint8_t i = 0; i < end; i++) {
+      Square square = pieces[i].square;
+      switch (pieces[i].piece) {
+        case W_PAWN:
+        case B_PAWN:
+          move_list = generate_pawn_captures_at(state, square, move_list);
+          break;
+            
+        case W_KNIGHT:
+        case B_KNIGHT:
+          move_list = generate_knight_captures_at(state, square, move_list);
+          break;
+            
+        case W_BISHOP:
+        case B_BISHOP:
+          move_list = generate_bishop_captures_at(state, square, move_list);
+          break;
+            
+        case W_ROOK:
+        case B_ROOK:
+          move_list = generate_rook_captures_at(state, square, move_list);
+          break;
+            
+        case W_QUEEN:
+        case B_QUEEN:
+          move_list = generate_queen_captures_at(state, square, move_list);
+          break;
+            
+        case W_KING:
+        case B_KING:
+          move_list = generate_king_captures_at(state, square, move_list);
+          break;
+      }
+    }
+  }
+  else {
+    for (uint8_t i = 0; i < end; i++) {
+      Square square = pieces[i].square;
+      switch (pieces[i].piece) {
+        case W_PAWN:
+        case B_PAWN:
+          move_list = generate_pawn_moves_at(state, square, move_list);
+          break;
+            
+        case W_KNIGHT:
+        case B_KNIGHT:
+          move_list = generate_knight_moves_at(state, square, move_list);
+          break;
+            
+        case W_BISHOP:
+        case B_BISHOP:
+          move_list = generate_bishop_moves_at(state, square, move_list);
+          break;
+            
+        case W_ROOK:
+        case B_ROOK:
+          move_list = generate_rook_moves_at(state, square, move_list);
+          break;
+            
+        case W_QUEEN:
+        case B_QUEEN:
+          move_list = generate_queen_moves_at(state, square, move_list);
+          break;
+            
+        case W_KING:
+        case B_KING:
+          move_list = generate_king_moves_at(state, square, move_list);
+          break;
+      }
+    }
+  }
+
+  return move_list;
+}
+
+
 int main(void) {
   Move *move_list = move_pool; // Initialize local pointer from the global pool
+
+  move_list = generate_moves(&state, &piece_list, CAPTURES, move_pool);
   
-  move_list = generate_pawn_captures(&state, 0, move_list);
-  move_list = generate_knight_captures(&state, 0, move_list);
-  move_list = generate_bishop_captures(&state, 0, move_list);
-  move_list = generate_rook_captures(&state, 0, move_list);
-  move_list = generate_queen_captures(&state, 0, move_list);
-  move_list = generate_king_captures(&state, 0, move_list);
-  //dbg_printf("hello");
-  
-  return 0;
+  return (int)move_list;
 }
