@@ -302,24 +302,27 @@ void perror(const char *str);
 # 6 "src/types.h" 2
 
 typedef enum {WHITE, BLACK} Color;
-typedef enum {CAPTURES, MOVES} Stage;
+typedef enum {HASH, CAPTURES, QUIETS} Stage;
 
 typedef uint8_t Square;
 typedef uint8_t Piece;
 typedef uint24_t Move;
 typedef uint8_t Flags;
+
 typedef Piece Board[128];
+
 typedef struct {
   Piece piece;
   Square square;
 } PieceInfo;
+# 38 "src/types.h"
 typedef struct {
   PieceInfo w_piece_list[16];
   PieceInfo b_piece_list[16];
-  uint8_t w_end;
-  uint8_t b_end;
+  uint8_t w_count;
+  uint8_t b_count;
 } PieceList;
-
+# 52 "src/types.h"
 typedef struct {
   Board board;
   PieceList piece_list;
@@ -335,7 +338,18 @@ typedef struct {
   _Bool b_queenside_castle;
 } State;
 # 5 "src/movegen.c" 2
-# 1 "src/utils.h" 1
+# 1 "src/board.h" 1
+
+
+
+
+
+extern State state;
+
+
+void make_move(Move move);
+void unmake_move(Move move);
+void reset_board();
 # 6 "src/movegen.c" 2
 # 1 "src/movegen.h" 1
 
@@ -344,17 +358,8 @@ typedef struct {
 # 1 "src/attributes.h" 1
 # 5 "src/movegen.h" 2
 # 18 "src/movegen.h"
-extern Move move_pool[64 * 32];
-
-extern Move *current_move_ptr;
-
-Move *generate_moves(State *state, PieceList *piece_list, Stage stage, Move *move_list);
+Move *generate_moves(Stage stage, Move *move_list);
 # 7 "src/movegen.c" 2
-
-State state;
-
-Move move_pool[64 * 32];
-PieceList piece_list;
 
 static const int8_t w_pawn_capture_offsets[2] = {(-15), (-17)};
 static const int8_t b_pawn_capture_offsets[2] = {(17), (15)};
@@ -374,12 +379,12 @@ static inline __attribute__((always_inline)) Move *add_move(Square from_square, 
   return move_list + 1;
 }
 
-static inline __attribute__((always_inline)) Move *generate_stepping_captures_at(State *state, Square square, int8_t offset, Move *move_list) {
+static inline __attribute__((always_inline)) Move *generate_stepping_captures_at(Square square, int8_t offset, Move *move_list) {
   Square target = square + offset;
   if (!((target) & 0x88)) {
-    Piece target_piece = state->board[target];
+    Piece target_piece = (state.board[(target)]);
     if (target_piece != 0) {
-      if ((((target_piece) & 1) ? WHITE : BLACK) != state->side_to_move) {
+      if ((((target_piece) & 1) ? WHITE : BLACK) != (state.side_to_move)) {
         move_list = add_move(square, target, 0, move_list);
       }
     }
@@ -388,18 +393,17 @@ static inline __attribute__((always_inline)) Move *generate_stepping_captures_at
   return move_list;
 }
 
-static inline __attribute__((always_inline)) Move *generate_sliding_captures_at(State *state, Square square, int8_t offset, Move *move_list) {
+static inline __attribute__((always_inline)) Move *generate_sliding_captures_at(Square square, int8_t offset, Move *move_list) {
   Square target = square + offset;
-  Piece *board = state->board;
   while (!((target) & 0x88)) {
-    Piece target_piece = board[target];
+    Piece target_piece = (state.board[(target)]);
     if (target_piece == 0) {
       target += offset;
       continue;
     }
 
     else {
-      if ((((target_piece) & 1) ? WHITE : BLACK) != state->side_to_move) {
+      if ((((target_piece) & 1) ? WHITE : BLACK) != (state.side_to_move)) {
         move_list = add_move(square, target, 0, move_list);
       }
 
@@ -410,22 +414,22 @@ static inline __attribute__((always_inline)) Move *generate_sliding_captures_at(
   return move_list;
 }
 
-static Move *generate_pawn_captures_at(State *state, Square square, Move *move_list) {
-  Color my_color = state->side_to_move;
+static Move *generate_pawn_captures_at(Square square, Move *move_list) {
+  Color my_color = (state.side_to_move);
   Square target;
   for (int i = 0; i < 2; i++) {
     if (my_color == WHITE) target = square + w_pawn_capture_offsets[i];
     else target = square + b_pawn_capture_offsets[i];
 
     if (!((target) & 0x88)) {
-      if (target == state->en_passant_target && state->en_passant_legal) {
+      if (target == (state.en_passant_target) && (state.en_passant_legal)) {
         move_list = add_move(square, target, ((0) << 4 | (1) << 3), move_list);
       }
 
       else {
-        Piece target_piece = state->board[target];
+        Piece target_piece = (state.board[(target)]);
         if (target_piece != 0) {
-          if ((((target_piece) & 1) ? WHITE : BLACK) != state->side_to_move) {
+          if ((((target_piece) & 1) ? WHITE : BLACK) != (state.side_to_move)) {
             if (target < 16) {
               move_list = add_move(square, target, ((9) << 4 | (0) << 3), move_list);
               move_list = add_move(square, target, ((7) << 4 | (0) << 3), move_list);
@@ -452,53 +456,53 @@ static Move *generate_pawn_captures_at(State *state, Square square, Move *move_l
   return move_list;
 }
 
-static Move *generate_knight_captures_at(State *state, Square square, Move *move_list) {
+static Move *generate_knight_captures_at(Square square, Move *move_list) {
 #pragma unroll
   for (uint8_t i = 0; i < 8; i++) {
-    move_list = generate_stepping_captures_at(state, square, knight_offsets[i], move_list);
+    move_list = generate_stepping_captures_at(square, knight_offsets[i], move_list);
   }
 
   return move_list;
 }
 
-static Move *generate_bishop_captures_at(State *state, Square square, Move *move_list) {
-  move_list = generate_sliding_captures_at(state, square, (-15), move_list);
-  move_list = generate_sliding_captures_at(state, square, (17), move_list);
-  move_list = generate_sliding_captures_at(state, square, (15), move_list);
-  move_list = generate_sliding_captures_at(state, square, (-17), move_list);
+static Move *generate_bishop_captures_at(Square square, Move *move_list) {
+  move_list = generate_sliding_captures_at(square, (-15), move_list);
+  move_list = generate_sliding_captures_at(square, (17), move_list);
+  move_list = generate_sliding_captures_at(square, (15), move_list);
+  move_list = generate_sliding_captures_at(square, (-17), move_list);
 
   return move_list;
 }
 
-static Move *generate_rook_captures_at(State *state, Square square, Move *move_list) {
-  move_list = generate_sliding_captures_at(state, square, (-16), move_list);
-  move_list = generate_sliding_captures_at(state, square, (1), move_list);
-  move_list = generate_sliding_captures_at(state, square, (16), move_list);
-  move_list = generate_sliding_captures_at(state, square, (-1), move_list);
+static Move *generate_rook_captures_at(Square square, Move *move_list) {
+  move_list = generate_sliding_captures_at(square, (-16), move_list);
+  move_list = generate_sliding_captures_at(square, (1), move_list);
+  move_list = generate_sliding_captures_at(square, (16), move_list);
+  move_list = generate_sliding_captures_at(square, (-1), move_list);
 
   return move_list;
 }
 
-static Move *generate_queen_captures_at(State *state, Square square, Move *move_list) {
-  move_list = generate_bishop_captures_at(state, square, move_list);
-  move_list = generate_rook_captures_at(state, square, move_list);
+static Move *generate_queen_captures_at(Square square, Move *move_list) {
+  move_list = generate_bishop_captures_at(square, move_list);
+  move_list = generate_rook_captures_at(square, move_list);
 
   return move_list;
 }
 
-static Move *generate_king_captures_at(State *state, Square square, Move *move_list) {
+static Move *generate_king_captures_at(Square square, Move *move_list) {
 #pragma unroll
   for (uint8_t i = 0; i < 8; i++) {
-    move_list = generate_stepping_captures_at(state, square, king_offsets[i], move_list);
+    move_list = generate_stepping_captures_at(square, king_offsets[i], move_list);
   }
 
   return move_list;
 }
 
-static inline __attribute__((always_inline)) Move *generate_stepping_moves_at(State *state, Square square, int8_t offset, Move *move_list) {
+static inline __attribute__((always_inline)) Move *generate_stepping_moves_at(Square square, int8_t offset, Move *move_list) {
   Square target = square + offset;
   if (!((target) & 0x88)) {
-    Piece target_piece = state->board[target];
+    Piece target_piece = (state.board[(target)]);
     if (target_piece == 0) {
       move_list = add_move(square, target, 0, move_list);
     }
@@ -507,11 +511,10 @@ static inline __attribute__((always_inline)) Move *generate_stepping_moves_at(St
   return move_list;
 }
 
-static inline __attribute__((always_inline)) Move *generate_sliding_moves_at(State *state, Square square, int8_t offset, Move *move_list) {
+static inline __attribute__((always_inline)) Move *generate_sliding_moves_at(Square square, int8_t offset, Move *move_list) {
   Square target = square + offset;
-  Piece *board = state->board;
   while (!((target) & 0x88)) {
-    Piece target_piece = board[target];
+    Piece target_piece = (state.board[(target)]);
     if (target_piece == 0) {
       move_list = add_move(square, target, 0, move_list);
       target += offset;
@@ -525,17 +528,17 @@ static inline __attribute__((always_inline)) Move *generate_sliding_moves_at(Sta
   return move_list;
 }
 
-static Move *generate_pawn_moves_at(State *state, Square square, Move *move_list) {
-  if (state->side_to_move == WHITE) {
+static Move *generate_pawn_moves_at(Square square, Move *move_list) {
+  if ((state.side_to_move) == WHITE) {
     Square target = square + (-16);
-    if (state->board[target] == 0) {
+    if ((state.board[(target)]) == 0) {
 
       if (target >= 16) {
         move_list = add_move(square, target, 0, move_list);
 
 
         if (96 <= square && square < 112) {
-          if (state->board[target + (-16)] == 0)
+          if ((state.board[(target + (-16))]) == 0)
             move_list = add_move(square, target + (-16), 0, move_list);
         }
       }
@@ -552,14 +555,14 @@ static Move *generate_pawn_moves_at(State *state, Square square, Move *move_list
 
   else {
     Square target = square + (16);
-    if (state->board[target] == 0) {
+    if ((state.board[(target)]) == 0) {
 
       if (target < 112) {
         move_list = add_move(square, target, 0, move_list);
 
 
         if (16 <= square && square < 32) {
-          if (state->board[target + (16)] == 0)
+          if ((state.board[(target + (16))]) == 0)
             move_list = add_move(square, target + (16), 0, move_list);
         }
       }
@@ -577,77 +580,77 @@ static Move *generate_pawn_moves_at(State *state, Square square, Move *move_list
   return move_list;
 }
 
-static Move *generate_knight_moves_at(State *state, Square square, Move *move_list) {
+static Move *generate_knight_moves_at(Square square, Move *move_list) {
 #pragma unroll
   for (uint8_t i = 0; i < 8; i++) {
-    move_list = generate_stepping_moves_at(state, square, knight_offsets[i], move_list);
+    move_list = generate_stepping_moves_at(square, knight_offsets[i], move_list);
   }
 
   return move_list;
 }
 
-static Move *generate_bishop_moves_at(State *state, Square square, Move *move_list) {
-  move_list = generate_sliding_moves_at(state, square, (-15), move_list);
-  move_list = generate_sliding_moves_at(state, square, (17), move_list);
-  move_list = generate_sliding_moves_at(state, square, (15), move_list);
-  move_list = generate_sliding_moves_at(state, square, (-17), move_list);
+static Move *generate_bishop_moves_at(Square square, Move *move_list) {
+  move_list = generate_sliding_moves_at(square, (-15), move_list);
+  move_list = generate_sliding_moves_at(square, (17), move_list);
+  move_list = generate_sliding_moves_at(square, (15), move_list);
+  move_list = generate_sliding_moves_at(square, (-17), move_list);
 
   return move_list;
 }
 
-static Move *generate_rook_moves_at(State *state, Square square, Move *move_list) {
-  move_list = generate_sliding_moves_at(state, square, (-16), move_list);
-  move_list = generate_sliding_moves_at(state, square, (1), move_list);
-  move_list = generate_sliding_moves_at(state, square, (16), move_list);
-  move_list = generate_sliding_moves_at(state, square, (-1), move_list);
+static Move *generate_rook_moves_at(Square square, Move *move_list) {
+  move_list = generate_sliding_moves_at(square, (-16), move_list);
+  move_list = generate_sliding_moves_at(square, (1), move_list);
+  move_list = generate_sliding_moves_at(square, (16), move_list);
+  move_list = generate_sliding_moves_at(square, (-1), move_list);
 
   return move_list;
 }
 
-static Move *generate_queen_moves_at(State *state, Square square, Move *move_list) {
-  move_list = generate_bishop_moves_at(state, square, move_list);
-  move_list = generate_rook_moves_at(state, square, move_list);
+static Move *generate_queen_moves_at(Square square, Move *move_list) {
+  move_list = generate_bishop_moves_at(square, move_list);
+  move_list = generate_rook_moves_at(square, move_list);
 
   return move_list;
 }
 
-static Move *generate_king_moves_at(State *state, Square square, Move *move_list) {
-  Color my_color = state->side_to_move;
+static Move *generate_king_moves_at(Square square, Move *move_list) {
+  Color my_color = (state.side_to_move);
 
 #pragma unroll
   for (uint8_t i = 0; i < 8; i++) {
-    move_list = generate_stepping_moves_at(state, square, king_offsets[i], move_list);
+    move_list = generate_stepping_moves_at(square, king_offsets[i], move_list);
   }
 
   if (my_color == WHITE) {
-    if (state->w_kingside_castle) {
-      if (state->board[square + (1)] == 0 &&
-          state->board[square + (1) + (1)] == 0) {
+    if ((state.w_kingside_castle)) {
+      if ((state.board[(square + (1))]) == 0 &&
+          (state.board[(square + (1) + (1))]) == 0) {
           move_list = add_move(square, square + (1) + (1), 0, move_list);
         }
     }
 
-    if (state->w_queenside_castle) {
-      if (state->board[square + (-1)] == 0 &&
-          state->board[square + (-1) + (-1)] == 0 &&
-          state->board[square + (-1) + (-1) + (-1)] == 0) {
+    if ((state.w_kingside_castle)) {
+      if ((state.board[(square + (-1))]) == 0 &&
+          (state.board[(square + (-1) + (-1))]) == 0 &&
+          (state.board[(square + (-1) + (-1) + (-1))]) == 0) {
           move_list = add_move(square, square + (-1) + (-1), 0, move_list);
         }
     }
   }
 
   else {
-    if (state->b_kingside_castle) {
-      if (state->board[square + (1)] == 0 &&
-          state->board[square + (1) + (1)] == 0) {
+    if ((state.b_kingside_castle)) {
+      if ((state.board[(square + (1))]) == 0 &&
+          (state.board[(square + (1) + (1))]) == 0) {
           move_list = add_move(square, square + (1) + (1), 0, move_list);
         }
     }
 
-    if (state->b_queenside_castle) {
-      if (state->board[square + (-1)] == 0 &&
-          state->board[square + (-1) + (-1)] == 0 &&
-          state->board[square + (-1) + (-1) + (-1)] == 0) {
+    if ((state.b_queenside_castle)) {
+      if ((state.board[(square + (-1))]) == 0 &&
+          (state.board[(square + (-1) + (-1))]) == 0 &&
+          (state.board[(square + (-1) + (-1) + (-1))]) == 0) {
           move_list = add_move(square, square + (-1) + (-1), 0, move_list);
         }
     }
@@ -656,16 +659,16 @@ static Move *generate_king_moves_at(State *state, Square square, Move *move_list
   return move_list;
 }
 
-Move *generate_moves(State *state, PieceList *piece_list, Stage stage, Move *move_list) {
+Move *generate_moves(Stage stage, Move *move_list) {
   uint8_t end;
   PieceInfo *pieces;
-  if (state->side_to_move == WHITE) {
-    pieces = piece_list->w_piece_list;
-    end = piece_list->w_end;
+  if ((state.side_to_move) == WHITE) {
+    pieces = (state.piece_list.w_piece_list);
+    end = (state.piece_list.w_count);
   }
   else {
-    pieces = piece_list->b_piece_list;
-    end = piece_list->b_end;
+    pieces = (state.piece_list.b_piece_list);
+    end = (state.piece_list.b_count);
   }
 
   if (stage == CAPTURES) {
@@ -674,32 +677,32 @@ Move *generate_moves(State *state, PieceList *piece_list, Stage stage, Move *mov
       switch (pieces[i].piece) {
         case 1:
         case 2:
-          move_list = generate_pawn_captures_at(state, square, move_list);
+          move_list = generate_pawn_captures_at(square, move_list);
           break;
 
         case 3:
         case 4:
-          move_list = generate_knight_captures_at(state, square, move_list);
+          move_list = generate_knight_captures_at(square, move_list);
           break;
 
         case 5:
         case 6:
-          move_list = generate_bishop_captures_at(state, square, move_list);
+          move_list = generate_bishop_captures_at(square, move_list);
           break;
 
         case 7:
         case 8:
-          move_list = generate_rook_captures_at(state, square, move_list);
+          move_list = generate_rook_captures_at(square, move_list);
           break;
 
         case 9:
         case 10:
-          move_list = generate_queen_captures_at(state, square, move_list);
+          move_list = generate_queen_captures_at(square, move_list);
           break;
 
         case 11:
         case 12:
-          move_list = generate_king_captures_at(state, square, move_list);
+          move_list = generate_king_captures_at(square, move_list);
           break;
       }
     }
@@ -710,45 +713,36 @@ Move *generate_moves(State *state, PieceList *piece_list, Stage stage, Move *mov
       switch (pieces[i].piece) {
         case 1:
         case 2:
-          move_list = generate_pawn_moves_at(state, square, move_list);
+          move_list = generate_pawn_moves_at(square, move_list);
           break;
 
         case 3:
         case 4:
-          move_list = generate_knight_moves_at(state, square, move_list);
+          move_list = generate_knight_moves_at(square, move_list);
           break;
 
         case 5:
         case 6:
-          move_list = generate_bishop_moves_at(state, square, move_list);
+          move_list = generate_bishop_moves_at(square, move_list);
           break;
 
         case 7:
         case 8:
-          move_list = generate_rook_moves_at(state, square, move_list);
+          move_list = generate_rook_moves_at(square, move_list);
           break;
 
         case 9:
         case 10:
-          move_list = generate_queen_moves_at(state, square, move_list);
+          move_list = generate_queen_moves_at(square, move_list);
           break;
 
         case 11:
         case 12:
-          move_list = generate_king_moves_at(state, square, move_list);
+          move_list = generate_king_moves_at(square, move_list);
           break;
       }
     }
   }
 
   return move_list;
-}
-
-
-int main(void) {
-  Move *move_list = move_pool;
-
-  move_list = generate_moves(&state, &piece_list, CAPTURES, move_pool);
-
-  return (int)move_list;
 }

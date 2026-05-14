@@ -3,5 +3,5 @@
 
 #include "types.h"
 
-
+State state;
 

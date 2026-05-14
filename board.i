@@ -302,24 +302,27 @@ void perror(const char *str);
 # 6 "src/types.h" 2
 
 typedef enum {WHITE, BLACK} Color;
-typedef enum {CAPTURES, MOVES} Stage;
+typedef enum {HASH, CAPTURES, QUIETS} Stage;
 
 typedef uint8_t Square;
 typedef uint8_t Piece;
 typedef uint24_t Move;
 typedef uint8_t Flags;
+
 typedef Piece Board[128];
+
 typedef struct {
   Piece piece;
   Square square;
 } PieceInfo;
+# 38 "src/types.h"
 typedef struct {
   PieceInfo w_piece_list[16];
   PieceInfo b_piece_list[16];
-  uint8_t w_end;
-  uint8_t b_end;
+  uint8_t w_count;
+  uint8_t b_count;
 } PieceList;
-
+# 52 "src/types.h"
 typedef struct {
   Board board;
   PieceList piece_list;
@@ -336,3 +339,4 @@ typedef struct {
 } State;
 # 5 "src/board.c" 2
 
+State state;

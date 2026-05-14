@@ -4,7 +4,7 @@ Merging object attributes
 
 Discarded input sections
 
- .comment       0x00000000       0x70 obj/MINTI.o
+ .comment       0x00000000      0x150 obj/MINTI.o
  .note.GNU-stack
                 0x00000000        0x0 obj/MINTI.o
  .init.weak_crt
@@ -43,7 +43,7 @@ Linker script and memory map
                 0x00d1a907                ___exithl
                 0x00d1a908                _exit.sp
 
-.text           0x00d1a943     0x1359
+.text           0x00d1a943     0x1306
  *(.text.unlikely .text.*_unlikely .text.unlikely.*)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
@@ -55,71 +55,68 @@ Linker script and memory map
                 0x00d1a951                __frameset0
                 0x00d1a95c                __lor
                 0x00d1a960                __ior
+ .text._main    0x00d1a977       0x21 obj/MINTI.o
+                0x00d1a977                _main
  .text._generate_moves
-                0x00d1a977      0xde2 obj/MINTI.o
-                0x00d1a977                _generate_moves
+                0x00d1a998      0xdef obj/MINTI.o
+                0x00d1a998                _generate_moves
  .text._generate_bishop_captures_at
-                0x00d1b759      0x181 obj/MINTI.o
+                0x00d1b787      0x14c obj/MINTI.o
  .text._generate_rook_captures_at
-                0x00d1b8da      0x179 obj/MINTI.o
+                0x00d1b8d3      0x144 obj/MINTI.o
  .text._generate_bishop_moves_at
-                0x00d1ba53      0x120 obj/MINTI.o
+                0x00d1ba17      0x124 obj/MINTI.o
  .text._generate_rook_moves_at
-                0x00d1bb73      0x10a obj/MINTI.o
- .text._main    0x00d1bc7d       0x1f obj/MINTI.o
-                0x00d1bc7d                _main
+                0x00d1bb3b      0x10e obj/MINTI.o
  *(.gnu.warning)
 
-.rodata         0x00d1bc9c       0x4c
+.rodata         0x00d1bc49       0x4c
  *(.rodata .rodata.* .gnu.linkonce.r.*)
  .rodata._generate_moves
-                0x00d1bc9c       0x48 obj/MINTI.o
+                0x00d1bc49       0x48 obj/MINTI.o
  .rodata._w_pawn_capture_offsets
-                0x00d1bce4        0x2 obj/MINTI.o
+                0x00d1bc91        0x2 obj/MINTI.o
  .rodata._b_pawn_capture_offsets
-                0x00d1bce6        0x2 obj/MINTI.o
+                0x00d1bc93        0x2 obj/MINTI.o
 
-.init_array     0x00d1bce8        0x0
+.init_array     0x00d1bc95        0x0
                 [!provide]                        PROVIDE (__init_array_start = .)
  *(.preinit_array)
  *(SORT_BY_INIT_PRIORITY(.init_array.*))
  *(.init_array)
                 [!provide]                        PROVIDE (__init_array_end = .)
 
-.fini_array     0x00d1bce8        0x0
+.fini_array     0x00d1bc95        0x0
                 [!provide]                        PROVIDE (__fini_array_start = .)
  *(SORT_BY_INIT_PRIORITY(.fini_array.*))
  *(.fini_array)
                 [!provide]                        PROVIDE (__fini_array_end = .)
-                0x00d1bce8                        ___data_low = .
+                0x00d1bc95                        ___data_low = .
 
-.data           0x00d1bce8        0x0
+.data           0x00d1bc95        0x0
  *(.data .data.* .gnu.linkonce.d.*)
  *(.data1)
-                0x00d1bce8                        ___runprgm_reloc_start = .
+                0x00d1bc95                        ___runprgm_reloc_start = .
  *(.runprgm.reloc)
-                0x00d1bce8                        ___runprgm_reloc_end = .
-                0x00d1bce8                        ___data_high = .
+                0x00d1bc95                        ___runprgm_reloc_end = .
+                0x00d1bc95                        ___data_high = .
                 0x00000000                        ___data_len = (___data_high - ___data_low)
                 0x00d052c6                        . = BSSHEAP_LOW
                 0x00d052c6                        ___bss_low = .
 
-.bss            0x00d052c6     0x190d
+.bss            0x00d052c6     0x18cb
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss._state    0x00d052c6       0xcb obj/MINTI.o
+                0x00d052c6                _state
  .bss._move_pool
-                0x00d052c6     0x1800 obj/MINTI.o
-                0x00d052c6                _move_pool
- .bss._state    0x00d06ac6       0xcb obj/MINTI.o
-                0x00d06ac6                _state
- .bss._piece_list
-                0x00d06b91       0x42 obj/MINTI.o
-                0x00d06b91                _piece_list
+                0x00d05391     0x1800 obj/MINTI.o
+                0x00d05391                _move_pool
  *(COMMON)
-                0x00d06bd3                        ___bss_high = .
-                0x0000190d                        ___bss_len = (___bss_high - ___bss_low)
+                0x00d06b91                        ___bss_high = .
+                0x000018cb                        ___bss_len = (___bss_high - ___bss_low)
                 0x00000001                        ASSERT ((. <= BSSHEAP_HIGH), Error: BSS exceed BSSHEAP_HIGH limit)
-                0x00d06bd3                        ___heap_low = .
+                0x00d06b91                        ___heap_low = .
                 0x00d13fd8                        . = BSSHEAP_HIGH
                 0x00d13fd8                        ___heap_high = .
 

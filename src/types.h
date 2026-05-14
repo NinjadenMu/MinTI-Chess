@@ -5,24 +5,50 @@
 #include <stdbool.h>
 
 typedef enum {WHITE, BLACK} Color;
-typedef enum {CAPTURES, MOVES} Stage;
+typedef enum {HASH, CAPTURES, QUIETS} Stage;
 
 typedef uint8_t Square;
 typedef uint8_t Piece;
 typedef uint24_t Move;
 typedef uint8_t Flags;
+
 typedef Piece Board[128];
+
 typedef struct {
   Piece piece;
   Square square;
 } PieceInfo;
+
+/**
+ * @brief Compact lists of all white and black pieces on board
+ * 
+ * This allows for iteration over all pieces of a specific color without
+ * needing to scan the entire Board array (which may contain many EMPTY's)
+ * 
+ * @invariant The arrays should remain densely packed.  Specifically:
+ * - `w_piece_list[0]` through `w_piece_list[w_count - 1]` must contain valid,
+ *    non-EMPTY pieces.
+ * - `w_piece_list[w_count]` through `w_piece_list[15]` must have their piece
+ *    type set to `EMPTY`.
+ * - `b_piece_list[0]` through `b_piece_list[w_count - 1]` must contain valid,
+ *    non-EMPTY pieces.
+  * - `b_piece_list[w_count]` through `b_piece_list[15]` must have their piece
+ *     type set to `EMPTY`.
+ */
 typedef struct {
   PieceInfo w_piece_list[16];
   PieceInfo b_piece_list[16];
-  uint8_t w_end;
-  uint8_t b_end;
+  uint8_t w_count;
+  uint8_t b_count;
 } PieceList;
 
+/**
+ * @brief Represents complete state of a chess game
+ * 
+ * This structure also contains all data structures (including the board
+ * and piece lists) required to define, evaluate, and generate moves for a
+ * position
+ */
 typedef struct {
   Board board;
   PieceList piece_list;
