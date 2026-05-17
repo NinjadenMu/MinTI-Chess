@@ -1,7 +1,7 @@
 # 1 "src/movegen.c"
 # 1 "<built-in>" 1
 # 1 "<built-in>" 3
-# 368 "<built-in>" 3
+# 367 "<built-in>" 3
 # 1 "<command line>" 1
 # 1 "<built-in>" 2
 # 1 "src/movegen.c" 2
@@ -291,6 +291,15 @@ int vsscanf(const char *__restrict buffer, const char *__restrict format, va_lis
 
 void perror(const char *str);
 # 9 "/Users/jaden/CEdev/include/debug.h" 2 3
+# 66 "/Users/jaden/CEdev/include/debug.h" 3
+void dbg_Debugger(void);
+# 79 "/Users/jaden/CEdev/include/debug.h" 3
+void dbg_WatchpointSet(void *address, size_t size, uint8_t mask);
+
+
+
+
+void dbg_WatchpointRemoveAll(void);
 # 3 "src/movegen.c" 2
 
 # 1 "src/types.h" 1
@@ -307,6 +316,7 @@ typedef enum {HASH, CAPTURES, QUIETS} Stage;
 typedef uint8_t Square;
 typedef uint8_t Piece;
 typedef uint24_t Move;
+
 typedef uint8_t Flags;
 
 typedef Piece Board[128];
@@ -315,14 +325,14 @@ typedef struct {
   Piece piece;
   Square square;
 } PieceInfo;
-# 38 "src/types.h"
+# 39 "src/types.h"
 typedef struct {
   PieceInfo w_piece_list[16];
   PieceInfo b_piece_list[16];
   uint8_t w_count;
   uint8_t b_count;
 } PieceList;
-# 52 "src/types.h"
+# 53 "src/types.h"
 typedef struct {
   Board board;
   PieceList piece_list;
@@ -337,37 +347,51 @@ typedef struct {
   _Bool b_kingside_castle;
   _Bool b_queenside_castle;
 } State;
+
+typedef struct {
+  Piece captured_piece;
+  Square en_passant_target;
+  _Bool en_passsant_legal;
+
+  _Bool w_kingside_castle;
+  _Bool w_queenside_castle;
+  _Bool b_kingside_castle;
+  _Bool b_queenside_castle;
+} UndoInfo;
 # 5 "src/movegen.c" 2
+# 1 "src/consts.h" 1
+# 20 "src/consts.h"
+extern const int8_t w_pawn_capture_offsets[2];
+extern const int8_t b_pawn_capture_offsets[2];
+extern const int8_t knight_offsets[8];
+extern const int8_t bishop_offsets[4];
+extern const int8_t rook_offsets[4];
+extern const int8_t king_offsets[8];
+# 6 "src/movegen.c" 2
 # 1 "src/board.h" 1
-
-
-
-
-
+# 18 "src/board.h"
 extern State state;
 
 
-void make_move(Move move);
-void unmake_move(Move move);
-void reset_board();
-# 6 "src/movegen.c" 2
-# 1 "src/movegen.h" 1
-
-
-
-# 1 "src/attributes.h" 1
-# 5 "src/movegen.h" 2
-# 18 "src/movegen.h"
-Move *generate_moves(Stage stage, Move *move_list);
+_Bool make_move(Move move, UndoInfo *undo_info);
+void unmake_move(Move move, UndoInfo *undo_info);
+void reset_board(void);
 # 7 "src/movegen.c" 2
+# 1 "src/movegen.h" 1
+# 17 "src/movegen.h"
+Move *generate_moves(Stage stage, Move *move_list);
+# 8 "src/movegen.c" 2
 
-static const int8_t w_pawn_capture_offsets[2] = {(-15), (-17)};
-static const int8_t b_pawn_capture_offsets[2] = {(17), (15)};
-static const int8_t knight_offsets[8] = {-14, -18, -31, -33, 14, 18, 31, 33};
-static const int8_t king_offsets[8] = {(-16), (-15), (1), (17),
+const int8_t w_pawn_capture_offsets[2] = {(-15), (-17)};
+const int8_t b_pawn_capture_offsets[2] = {(17), (15)};
+const int8_t knight_offsets[8] = {-14, -18, -31, -33, 14, 18, 31, 33};
+const int8_t bishop_offsets[4] = {(-15), (17), (15), (-17)};
+const int8_t rook_offsets[4] = {(-16), (1), (16), (-1)};
+const int8_t king_offsets[8] = {(-16), (-15), (1), (17),
                                  (16), (15), (-1), (-17)};
 
-static inline __attribute__((always_inline)) Move *add_move(Square from_square, Square to_square, Flags flags, Move *move_list) {
+static __attribute__((noinline)) Move *add_move(Square from_square, Square to_square, Flags flags, Move *move_list) {
+  sprintf(((char*)0xFB0000),"From: %hhu To: %hhu\n", from_square, to_square);
   uint8_t *move_block = (uint8_t *)move_list;
 
 
@@ -423,7 +447,7 @@ static Move *generate_pawn_captures_at(Square square, Move *move_list) {
 
     if (!((target) & 0x88)) {
       if (target == (state.en_passant_target) && (state.en_passant_legal)) {
-        move_list = add_move(square, target, ((0) << 4 | (1) << 3), move_list);
+        move_list = add_move(square, target, ((0) << 4 | (1) << 3 | (0) << 2), move_list);
       }
 
       else {
@@ -431,17 +455,17 @@ static Move *generate_pawn_captures_at(Square square, Move *move_list) {
         if (target_piece != 0) {
           if ((((target_piece) & 1) ? WHITE : BLACK) != (state.side_to_move)) {
             if (target < 16) {
-              move_list = add_move(square, target, ((9) << 4 | (0) << 3), move_list);
-              move_list = add_move(square, target, ((7) << 4 | (0) << 3), move_list);
-              move_list = add_move(square, target, ((5) << 4 | (0) << 3), move_list);
-              move_list = add_move(square, target, ((3) << 4 | (0) << 3), move_list);
+              move_list = add_move(square, target, ((9) << 4 | (0) << 3 | (0) << 2), move_list);
+              move_list = add_move(square, target, ((7) << 4 | (0) << 3 | (0) << 2), move_list);
+              move_list = add_move(square, target, ((5) << 4 | (0) << 3 | (0) << 2), move_list);
+              move_list = add_move(square, target, ((3) << 4 | (0) << 3 | (0) << 2), move_list);
             }
 
             else if (target >= 112) {
-              move_list = add_move(square, target, ((10) << 4 | (0) << 3), move_list);
-              move_list = add_move(square, target, ((8) << 4 | (0) << 3), move_list);
-              move_list = add_move(square, target, ((6) << 4 | (0) << 3), move_list);
-              move_list = add_move(square, target, ((4) << 4 | (0) << 3), move_list);
+              move_list = add_move(square, target, ((10) << 4 | (0) << 3 | (0) << 2), move_list);
+              move_list = add_move(square, target, ((8) << 4 | (0) << 3 | (0) << 2), move_list);
+              move_list = add_move(square, target, ((6) << 4 | (0) << 3 | (0) << 2), move_list);
+              move_list = add_move(square, target, ((4) << 4 | (0) << 3 | (0) << 2), move_list);
             }
 
             else {
@@ -456,7 +480,7 @@ static Move *generate_pawn_captures_at(Square square, Move *move_list) {
   return move_list;
 }
 
-static Move *generate_knight_captures_at(Square square, Move *move_list) {
+static __attribute__((noinline)) Move *generate_knight_captures_at(Square square, Move *move_list) {
 #pragma unroll
   for (uint8_t i = 0; i < 8; i++) {
     move_list = generate_stepping_captures_at(square, knight_offsets[i], move_list);
@@ -545,10 +569,10 @@ static Move *generate_pawn_moves_at(Square square, Move *move_list) {
 
 
       else {
-        move_list = add_move(square, target, ((9) << 4 | (0) << 3), move_list);
-        move_list = add_move(square, target, ((7) << 4 | (0) << 3), move_list);
-        move_list = add_move(square, target, ((5) << 4 | (0) << 3), move_list);
-        move_list = add_move(square, target, ((3) << 4 | (0) << 3), move_list);
+        move_list = add_move(square, target, ((9) << 4 | (0) << 3 | (0) << 2), move_list);
+        move_list = add_move(square, target, ((7) << 4 | (0) << 3 | (0) << 2), move_list);
+        move_list = add_move(square, target, ((5) << 4 | (0) << 3 | (0) << 2), move_list);
+        move_list = add_move(square, target, ((3) << 4 | (0) << 3 | (0) << 2), move_list);
       }
     }
   }
@@ -569,10 +593,10 @@ static Move *generate_pawn_moves_at(Square square, Move *move_list) {
 
 
       else {
-        move_list = add_move(square, target, ((10) << 4 | (0) << 3), move_list);
-        move_list = add_move(square, target, ((8) << 4 | (0) << 3), move_list);
-        move_list = add_move(square, target, ((6) << 4 | (0) << 3), move_list);
-        move_list = add_move(square, target, ((4) << 4 | (0) << 3), move_list);
+        move_list = add_move(square, target, ((10) << 4 | (0) << 3 | (0) << 2), move_list);
+        move_list = add_move(square, target, ((8) << 4 | (0) << 3 | (0) << 2), move_list);
+        move_list = add_move(square, target, ((6) << 4 | (0) << 3 | (0) << 2), move_list);
+        move_list = add_move(square, target, ((4) << 4 | (0) << 3 | (0) << 2), move_list);
       }
     }
   }
@@ -626,15 +650,15 @@ static Move *generate_king_moves_at(Square square, Move *move_list) {
     if ((state.w_kingside_castle)) {
       if ((state.board[(square + (1))]) == 0 &&
           (state.board[(square + (1) + (1))]) == 0) {
-          move_list = add_move(square, square + (1) + (1), 0, move_list);
+          move_list = add_move(square, square + (1) + (1), ((0) << 4 | (0) << 3 | (1) << 2), move_list);
         }
     }
 
-    if ((state.w_kingside_castle)) {
+    if ((state.w_queenside_castle)) {
       if ((state.board[(square + (-1))]) == 0 &&
           (state.board[(square + (-1) + (-1))]) == 0 &&
           (state.board[(square + (-1) + (-1) + (-1))]) == 0) {
-          move_list = add_move(square, square + (-1) + (-1), 0, move_list);
+          move_list = add_move(square, square + (-1) + (-1), ((0) << 4 | (0) << 3 | (1) << 2), move_list);
         }
     }
   }
@@ -643,7 +667,7 @@ static Move *generate_king_moves_at(Square square, Move *move_list) {
     if ((state.b_kingside_castle)) {
       if ((state.board[(square + (1))]) == 0 &&
           (state.board[(square + (1) + (1))]) == 0) {
-          move_list = add_move(square, square + (1) + (1), 0, move_list);
+          move_list = add_move(square, square + (1) + (1), ((0) << 4 | (0) << 3 | (1) << 2), move_list);
         }
     }
 
@@ -651,7 +675,7 @@ static Move *generate_king_moves_at(Square square, Move *move_list) {
       if ((state.board[(square + (-1))]) == 0 &&
           (state.board[(square + (-1) + (-1))]) == 0 &&
           (state.board[(square + (-1) + (-1) + (-1))]) == 0) {
-          move_list = add_move(square, square + (-1) + (-1), 0, move_list);
+          move_list = add_move(square, square + (-1) + (-1), ((0) << 4 | (0) << 3 | (1) << 2), move_list);
         }
     }
   }
@@ -660,6 +684,7 @@ static Move *generate_king_moves_at(Square square, Move *move_list) {
 }
 
 Move *generate_moves(Stage stage, Move *move_list) {
+  sprintf(((char*)0xFB0000),"Entered generate_moves\n");
   uint8_t end;
   PieceInfo *pieces;
   if ((state.side_to_move) == WHITE) {
@@ -673,6 +698,8 @@ Move *generate_moves(Stage stage, Move *move_list) {
 
   if (stage == CAPTURES) {
     for (uint8_t i = 0; i < end; i++) {
+      sprintf(((char*)0xFB0000),"Loop iteration %hhu reached\n", i);
+      sprintf(((char*)0xFB0000),"move_list: %p\n", move_list);
       Square square = pieces[i].square;
       switch (pieces[i].piece) {
         case 1:
@@ -709,6 +736,8 @@ Move *generate_moves(Stage stage, Move *move_list) {
   }
   else {
     for (uint8_t i = 0; i < end; i++) {
+      sprintf(((char*)0xFB0000),"Loop iteration %hhu reached\n", i);
+      sprintf(((char*)0xFB0000),"move_list: %p\n", move_list);
       Square square = pieces[i].square;
       switch (pieces[i].piece) {
         case 1:

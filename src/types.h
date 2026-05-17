@@ -8,11 +8,15 @@ typedef enum {WHITE, BLACK} Color;
 typedef enum {HASH, CAPTURES, QUIETS} Stage;
 
 typedef uint8_t Square;
+// ranges from 0 to 12 (fits in lower 4 bits)
 typedef uint8_t Piece;
+// the upper 4 bits of PackedPiece are its index in its piece list
+typedef uint8_t PackedPiece;
 typedef uint24_t Move;
+// a flag with value 0 indicates a "normal" move (no promotion/castling)
 typedef uint8_t Flags;
 
-typedef Piece Board[128];
+typedef PackedPiece Board[128];
 
 typedef struct {
   Piece piece;
@@ -24,16 +28,21 @@ typedef struct {
  * 
  * This allows for iteration over all pieces of a specific color without
  * needing to scan the entire Board array (which may contain many EMPTY's)
+ * It also guarantees that the king's position in the piece list is fixed
+ * at index 0
  * 
- * @invariant The arrays should remain densely packed.  Specifically:
+ * @invariant The arrays begin with the king and remain "densely" packed
+ * Specifically:
+ * - `w_piece_list[0]` must correspond to the white king
+ * - `b_piece_list[0]` must correspond to the black king
  * - `w_piece_list[0]` through `w_piece_list[w_count - 1]` must contain valid,
  *    non-EMPTY pieces.
  * - `w_piece_list[w_count]` through `w_piece_list[15]` must have their piece
  *    type set to `EMPTY`.
- * - `b_piece_list[0]` through `b_piece_list[w_count - 1]` must contain valid,
+ * - `b_piece_list[0]` through `b_piece_list[b_count - 1]` must contain valid,
  *    non-EMPTY pieces.
-  * - `b_piece_list[w_count]` through `b_piece_list[15]` must have their piece
- *     type set to `EMPTY`.
+ * - `b_piece_list[b_count]` through `b_piece_list[15]` must have their piece
+ *    type set to `EMPTY`.
  */
 typedef struct {
   PieceInfo w_piece_list[16];
@@ -63,6 +72,17 @@ typedef struct {
   bool b_kingside_castle;
   bool b_queenside_castle;
 } State;
+
+typedef struct {
+  PackedPiece captured_packed_piece;
+  Square en_passant_target;
+  bool en_passant_legal;
+
+  bool w_kingside_castle;
+  bool w_queenside_castle;
+  bool b_kingside_castle;
+  bool b_queenside_castle;
+} UndoInfo;
 
 #define EMPTY 0
 #define W_PAWN 1

@@ -4,7 +4,7 @@ Merging object attributes
 
 Discarded input sections
 
- .comment       0x00000000      0x150 obj/MINTI.o
+ .comment       0x00000000      0x1c0 obj/MINTI.o
  .note.GNU-stack
                 0x00000000        0x0 obj/MINTI.o
  .init.weak_crt
@@ -36,113 +36,232 @@ Linker script and memory map
  .header.icon   0x00d1a882       0x48 obj/MINTI.o
                 0x00d1a887                ___description
 
-.init           0x00d1a8ca       0x79
+.init           0x00d1a8ca       0xe0
  *(.init)
- .init          0x00d1a8ca       0x79 obj/crt0.o
+ .init          0x00d1a8ca       0xe0 obj/crt0.o
                 0x00d1a8ca                __start
-                0x00d1a907                ___exithl
-                0x00d1a908                _exit.sp
+                0x00d1a927                __libload_library_FILEIOC
+                0x00d1a931                _ti_PutC
+                0x00d1a96e                ___exithl
+                0x00d1a96f                _exit.sp
 
-.text           0x00d1a943     0x1306
+.text           0x00d1a9aa     0x3844
  *(.text.unlikely .text.*_unlikely .text.unlikely.*)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
  *(.text.hot .text.hot.*)
  *(SORT_BY_NAME(.text.sorted.*))
  *(.text .stub .text.* .gnu.linkonce.t.*)
- .text          0x00d1a943       0x34 obj/MINTI.o
-                0x00d1a943                __frameset
-                0x00d1a951                __frameset0
-                0x00d1a95c                __lor
-                0x00d1a960                __ior
- .text._main    0x00d1a977       0x21 obj/MINTI.o
-                0x00d1a977                _main
+ .text          0x00d1a9aa      0x415 obj/MINTI.o
+                0x00d1a9aa                __land
+                0x00d1a9ae                __iand
+                0x00d1a9c5                __dcmp
+                0x00d1aa23                __frameset
+                0x00d1aa31                __frameset0
+                0x00d1aa3c                __ftod
+                0x00d1aa84                __imulu
+                0x00d1aa84                __imuls
+                0x00d1aab4                __ishl
+                0x00d1aab4                __sshl
+                0x00d1aada                __ishru
+                0x00d1aadf                __ishrs
+                0x00d1ab1b                __lladd
+                0x00d1ab3f                __lland
+                0x00d1ab7b                __llcmps
+                0x00d1aba8                __llcmpu
+                0x00d1abd2                __llcmpzero
+                0x00d1abd2                __llequzero
+                0x00d1abe7                __lldivu
+                0x00d1abfb                __lldvrmu
+                0x00d1ac02                __lldvrmu.hijack
+                0x00d1ac59                __llmulu
+                0x00d1acae                __llshl
+                0x00d1acc8                __llshru
+                0x00d1acf8                __llshrs
+                0x00d1ad34                __llxor
+                0x00d1ad70                __sand
+                0x00d1ad79                __setflag
+                0x00d1ad83                __lxor
+                0x00d1ad87                __ixor
+                0x00d1ad9e                _memcpy
+ .text._reset_board
+                0x00d1adbf       0x25 obj/MINTI.o
+                0x00d1adbf                _reset_board
+ .text._main    0x00d1ade4       0xd1 obj/MINTI.o
+                0x00d1ade4                _main
  .text._generate_moves
-                0x00d1a998      0xdef obj/MINTI.o
-                0x00d1a998                _generate_moves
+                0x00d1aeb5      0x31c obj/MINTI.o
+                0x00d1aeb5                _generate_moves
+ .text._generate_pawn_captures_at
+                0x00d1b1d1      0x2a6 obj/MINTI.o
+ .text._generate_knight_captures_at
+                0x00d1b477       0xfd obj/MINTI.o
  .text._generate_bishop_captures_at
-                0x00d1b787      0x14c obj/MINTI.o
+                0x00d1b574      0x2ba obj/MINTI.o
  .text._generate_rook_captures_at
-                0x00d1b8d3      0x144 obj/MINTI.o
+                0x00d1b82e      0x2ba obj/MINTI.o
+ .text._generate_queen_captures_at
+                0x00d1bae8       0x5c obj/MINTI.o
+ .text._generate_king_captures_at
+                0x00d1bb44       0xfd obj/MINTI.o
+ .text._generate_pawn_moves_at
+                0x00d1bc41      0x30a obj/MINTI.o
+ .text._generate_knight_moves_at
+                0x00d1bf4b       0xdf obj/MINTI.o
  .text._generate_bishop_moves_at
-                0x00d1ba17      0x124 obj/MINTI.o
+                0x00d1c02a      0x236 obj/MINTI.o
  .text._generate_rook_moves_at
-                0x00d1bb3b      0x10e obj/MINTI.o
+                0x00d1c260      0x236 obj/MINTI.o
+ .text._generate_queen_moves_at
+                0x00d1c496       0x5c obj/MINTI.o
+ .text._generate_king_moves_at
+                0x00d1c4f2      0x2b5 obj/MINTI.o
+ .text._add_move
+                0x00d1c7a7       0x7f obj/MINTI.o
+ .text._npf_vpprintf
+                0x00d1c826     0x1775 obj/MINTI.o
+                0x00d1c826                _npf_vpprintf
+ .text._NPF_PUTC_IMPL
+                0x00d1df9b       0x2d obj/MINTI.o
+ .text._npf_utoa_rev
+                0x00d1dfc8       0xe6 obj/MINTI.o
+ .text._vsnprintf
+                0x00d1e0ae       0x88 obj/MINTI.o
+                0x00d1e0ae                _vsnprintf
+ .text._npf_bufputc
+                0x00d1e136       0x25 obj/MINTI.o
+ .text._npf_bufputc_nop
+                0x00d1e15b        0x7 obj/MINTI.o
+ .text._sprintf
+                0x00d1e162       0x29 obj/MINTI.o
+                0x00d1e162                _sprintf
+ .text.__bctlz  0x00d1e18b       0x22 obj/MINTI.o
+                0x00d1e18b                __bctlz
+ .text.__sctlz  0x00d1e1ad        0xc obj/MINTI.o
+                0x00d1e1ad                __sctlz
+ .text.__ictlz  0x00d1e1b9       0x12 obj/MINTI.o
+                0x00d1e1b9                __ictlz
+ .text.__llctlz
+                0x00d1e1cb        0xe obj/MINTI.o
+                0x00d1e1cb                __llctlz
+ .text.__i48ctlz
+                0x00d1e1d9       0x15 obj/MINTI.o
+                0x00d1e1d9                __i48ctlz
  *(.gnu.warning)
 
-.rodata         0x00d1bc49       0x4c
+.rodata         0x00d1e1ee      0x2db
  *(.rodata .rodata.* .gnu.linkonce.r.*)
+ .rodata._initial_state
+                0x00d1e1ee       0xcb obj/MINTI.o
+ .rodata._.str  0x00d1e2b9       0x2d obj/MINTI.o
+ .rodata._.str.1
+                0x00d1e2e6       0x2c obj/MINTI.o
+ .rodata._.str.2
+                0x00d1e312       0x22 obj/MINTI.o
  .rodata._generate_moves
-                0x00d1bc49       0x48 obj/MINTI.o
+                0x00d1e334       0x48 obj/MINTI.o
  .rodata._w_pawn_capture_offsets
-                0x00d1bc91        0x2 obj/MINTI.o
+                0x00d1e37c        0x2 obj/MINTI.o
+                0x00d1e37c                _w_pawn_capture_offsets
  .rodata._b_pawn_capture_offsets
-                0x00d1bc93        0x2 obj/MINTI.o
+                0x00d1e37e        0x2 obj/MINTI.o
+                0x00d1e37e                _b_pawn_capture_offsets
+ .rodata._knight_offsets
+                0x00d1e380        0x8 obj/MINTI.o
+                0x00d1e380                _knight_offsets
+ .rodata._king_offsets
+                0x00d1e388        0x8 obj/MINTI.o
+                0x00d1e388                _king_offsets
+ .rodata._.str.3
+                0x00d1e390       0x15 obj/MINTI.o
+ .rodata._npf_vpprintf
+                0x00d1e3a5      0x102 obj/MINTI.o
+ .rodata.libload
+                0x00d1e4a7       0x22 obj/crt0.o
 
-.init_array     0x00d1bc95        0x0
+.init_array     0x00d1e4c9        0x0
                 [!provide]                        PROVIDE (__init_array_start = .)
  *(.preinit_array)
  *(SORT_BY_INIT_PRIORITY(.init_array.*))
  *(.init_array)
                 [!provide]                        PROVIDE (__init_array_end = .)
 
-.fini_array     0x00d1bc95        0x0
+.fini_array     0x00d1e4c9        0x0
                 [!provide]                        PROVIDE (__fini_array_start = .)
  *(SORT_BY_INIT_PRIORITY(.fini_array.*))
  *(.fini_array)
                 [!provide]                        PROVIDE (__fini_array_end = .)
-                0x00d1bc95                        ___data_low = .
+                0x00d1e4c9                        ___data_low = .
 
-.data           0x00d1bc95        0x0
+.data           0x00d1e4c9        0x0
  *(.data .data.* .gnu.linkonce.d.*)
  *(.data1)
-                0x00d1bc95                        ___runprgm_reloc_start = .
+                0x00d1e4c9                        ___runprgm_reloc_start = .
  *(.runprgm.reloc)
-                0x00d1bc95                        ___runprgm_reloc_end = .
-                0x00d1bc95                        ___data_high = .
+                0x00d1e4c9                        ___runprgm_reloc_end = .
+                0x00d1e4c9                        ___data_high = .
                 0x00000000                        ___data_len = (___data_high - ___data_low)
                 0x00d052c6                        . = BSSHEAP_LOW
                 0x00d052c6                        ___bss_low = .
 
-.bss            0x00d052c6     0x18cb
+.bss            0x00d052c6     0x12d4
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
  .bss._state    0x00d052c6       0xcb obj/MINTI.o
                 0x00d052c6                _state
  .bss._move_pool
-                0x00d05391     0x1800 obj/MINTI.o
+                0x00d05391     0x1200 obj/MINTI.o
                 0x00d05391                _move_pool
+ .bss._pc_cnt.0
+                0x00d06591        0x3 obj/MINTI.o
+ .bss._pc_cnt.1
+                0x00d06594        0x3 obj/MINTI.o
+ .bss._pc_cnt.2
+                0x00d06597        0x3 obj/MINTI.o
  *(COMMON)
-                0x00d06b91                        ___bss_high = .
-                0x000018cb                        ___bss_len = (___bss_high - ___bss_low)
+                0x00d0659a                        ___bss_high = .
+                0x000012d4                        ___bss_len = (___bss_high - ___bss_low)
                 0x00000001                        ASSERT ((. <= BSSHEAP_HIGH), Error: BSS exceed BSSHEAP_HIGH limit)
-                0x00d06b91                        ___heap_low = .
+                0x00d0659a                        ___heap_low = .
                 0x00d13fd8                        . = BSSHEAP_HIGH
                 0x00d13fd8                        ___heap_high = .
 
 .runprgm
  *(.runprgm.reloc)
 
-.debug_info
+.debug_info     0x00000000      0xe7b
  *(.debug_info .debug_info.*)
+ .debug_info    0x00000000      0xe7b obj/MINTI.o
 
-.debug_abbrev
+.debug_abbrev   0x00000000      0x35b
  *(.debug_abbrev .debug_abbrev.*)
+ .debug_abbrev  0x00000000      0x35b obj/MINTI.o
 
-.debug_line
+.debug_line     0x00000000     0x14b2
  *(.debug_line .debug_line.*)
+ .debug_line    0x00000000     0x14b2 obj/MINTI.o
 
 .debug_line_str
+                0x00000000       0x71
  *(.debug_line_str .debug_line_str.*)
+ .debug_line_str
+                0x00000000       0x71 obj/MINTI.o
+                                0x13a (size before relaxing)
 
-.debug_str
+.debug_str      0x00000000      0x559
  *(.debug_str .debug_str.*)
+ .debug_str     0x00000000      0x559 obj/MINTI.o
+                                0x7f5 (size before relaxing)
 
 .debug_str_offsets
+                0x00000000      0x248
  *(.debug_str_offsets .debug_str_offsets.*)
+ .debug_str_offsets
+                0x00000000      0x248 obj/MINTI.o
 
-.debug_addr
+.debug_addr     0x00000000      0x11a
  *(.debug_addr .debug_addr.*)
+ .debug_addr    0x00000000      0x11a obj/MINTI.o
 
 .debug_aranges
  *(.debug_aranges .debug_aranges.*)
@@ -151,7 +270,10 @@ Linker script and memory map
  *(.debug_ranges .debug_ranges.*)
 
 .debug_rnglists
+                0x00000000       0xe8
  *(.debug_rnglists .debug_rnglists.*)
+ .debug_rnglists
+                0x00000000       0xe8 obj/MINTI.o
 
 .debug_loc
  *(.debug_loc .debug_loc.*)
