@@ -1,7 +1,7 @@
 /**
  * @file memory_map.h
  * 
- * Maps regions of memory for MinTI
+ * Maps regions of memory for MinTI, defines object locations
  * 
  * The TI-84 Plus CE is physically addressed.
  * 
@@ -28,13 +28,13 @@
  * 256-byte aligned, since it allows for loading offset addresses by setting 
  * the lower 8 bits instead of doing 24-bit addition.  
  * 
- * For example, consider loading a byte from a aligned struct with its base 
- * address in 24-bit register HL.
+ * For example, consider loading a byte from an aligned struct with its base 
+ * address in 24-bit register `hl`.
  * 
  * 256-byte alignment allows for:
- *  LD L, <offset>;
- *  LD a, (HL)
- * since L addresses the lower 8-bits of HL.
+ *  LD l, <offset>;
+ *  LD a, (hl)
+ * since L addresses the lower 8-bits of `hl`.
  * 
  * Alignment is the primary reason for placing these addresses in VRAM.  
  * Placing them in .bss might result in the base addresses moving when 
@@ -48,9 +48,9 @@
 #define CE_ADDR_CASTLING         0xD53125u
 #define CE_ADDR_EP_SQUARE        0xD53126u
 #define CE_ADDR_HALFMOVE         0xD53127u
-#define CE_ADDR_PIECE_INDEX      0xD53180u
-#define CE_ADDR_DELTA_ATTACKERS  0xD53200u
-#define CE_ADDR_DELTA_STEP       0xD53300u
+#define CE_ADDR_PIECE_INDEX      0xD53200u
+#define CE_ADDR_DELTA_ATTACKERS  0xD53300u
+#define CE_ADDR_DELTA_STEP       0xD53400u
 
 #define BOARD \
   ((uint8_t *)CE_ADDR_BOARD)
