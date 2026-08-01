@@ -23,8 +23,21 @@ uint8_t position_from_fen(const char *fen);
 /*
  * Low-level board operations used by `make_move` and higher level operations
  */
+
+/**
+ * @brief Adds `piece` to board at `square`
+ * @return 0 on success, 1 on failure
+ */
 uint8_t position_add_piece(uint8_t square, uint8_t piece);
+/**
+ * @brief Removes piece from `square`
+ * @return piece removed
+ */
 uint8_t position_remove_piece(uint8_t square);
+/**
+ * @brief Moves piece from `from` to `to`
+ * @return 0 on success, 1 on failure
+ */
 uint8_t position_move_piece(uint8_t from, uint8_t to);
 
 static inline uint8_t position_piece_at(uint8_t square)
