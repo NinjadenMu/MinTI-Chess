@@ -121,20 +121,26 @@ enum {
   GEN_ALL      = GEN_CAPTURES | GEN_QUIETS
 };
 
+static inline uint8_t piece_code_is_valid(uint8_t piece) {
+  uint8_t type = PIECE_TYPE(piece);
+  return
+    !(piece & 0xf0) &&
+    type >= PIECE_PAWN &&
+    type <= PIECE_QUEEN;
+}
+
 static inline uint8_t piece_is_friendly(uint8_t piece, uint8_t side)
 {
-  return (uint8_t)(
+  return
     piece != PIECE_EMPTY &&
-    PIECE_COLOR(piece) == side
-  );
+    PIECE_COLOR(piece) == side;
 }
 
 static inline uint8_t piece_is_enemy(uint8_t piece, uint8_t side)
 {
-  return (uint8_t)(
+  return
     piece != PIECE_EMPTY &&
-    PIECE_COLOR(piece) != side
-  );
+    PIECE_COLOR(piece) != side;
 }
 
 #define MOVEGEN_OVERFLOW 0xff

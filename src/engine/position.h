@@ -45,4 +45,6 @@ static inline uint8_t position_piece_at(uint8_t square)
     return BOARD[square];
 }
 
+uint8_t position_is_consistent(void);
+
 #endif

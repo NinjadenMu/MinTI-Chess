@@ -142,7 +142,7 @@ uint8_t position_set_start(void)
   position_clear();
 
   for (uint8_t file = 0; file < 8; ++file) {
-    if (!position_add_piece(
+    if (position_add_piece(
       SQUARE(file, 0),
       COLOR_WHITE | back_rank[file]
     )) {
