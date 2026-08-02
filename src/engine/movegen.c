@@ -57,8 +57,8 @@ uint8_t movegen_generate(
     out->to = destination_;                                                    \
     out->flags = flags_;                                                       \
     out->score = 0;                                                            \
-    out++;                                                                     \
-    generated++;                                                               \
+    ++out;                                                                     \
+    ++generated;                                                               \
   } while (0)
 
 #define EMIT_PROMOTIONS(destination_, base_flags_)                             \
@@ -92,11 +92,13 @@ uint8_t movegen_generate(
         if ((target ^ side) & COLOR_BLACK) {                                   \
           if (promotes_) {                                                     \
             EMIT_PROMOTIONS(to, MF_CAPTURE);                                   \
-          } else {                                                             \
+          }                                                                    \
+          else {                                                               \
             EMIT_MOVE(to, MF_CAPTURE);                                         \
           }                                                                    \
         }                                                                      \
-      } else if (to == ep_square) {                                            \
+      }                                                                        \
+      else if (to == ep_square) {                                              \
         EMIT_MOVE(to, MF_CAPTURE | MF_EP);                                     \
       }                                                                        \
     }                                                                          \
@@ -113,7 +115,8 @@ uint8_t movegen_generate(
         if (want_quiets) {                                                     \
           EMIT_MOVE(to, MF_QUIET);                                             \
         }                                                                      \
-      } else if (                                                              \
+      }                                                                        \
+      else if (                                                                \
         want_captures &&                                                       \
         ((target ^ side) & COLOR_BLACK)                                        \
       ) {                                                                      \
@@ -152,7 +155,7 @@ uint8_t movegen_generate(
     }                                                                          \
   } while (0)
 
-  for (index = 0; index < piece_count; index++) {
+  for (index = 0; index < piece_count; ++index) {
     from = piece_list[index];
 
     switch (PIECE_TYPE(board[from])) {
@@ -281,7 +284,8 @@ uint8_t movegen_generate(
             ) {
               EMIT_MOVE(SQUARE(2, 0), MF_CASTLE);
             }
-          } else if (
+          }
+          else if (
             side == COLOR_BLACK &&
             from == SQUARE(4, 7)
           ) {

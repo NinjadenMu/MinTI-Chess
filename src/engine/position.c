@@ -184,11 +184,11 @@ static uint8_t fen_piece_code(char character)
   uint8_t color;
   if (character >= 'A' && character <= 'Z') {
     color = COLOR_WHITE;
-  } 
+  }
   else if (character >= 'a' && character <= 'z') {
     color = COLOR_BLACK;
     character = (char)(character - 'a' + 'A');
-  } 
+  }
   else {
     return PIECE_EMPTY;
   }
@@ -261,7 +261,7 @@ uint8_t position_from_fen(const char *fen)
 
     if (
       piece == PIECE_EMPTY ||
-      !position_add_piece(SQUARE(file, rank), piece)
+      position_add_piece(SQUARE(file, rank), piece)
     ) {
       goto fail;
     }
@@ -275,9 +275,11 @@ uint8_t position_from_fen(const char *fen)
 
   if (*cursor == 'w') {
     POSITION_SIDE = COLOR_WHITE;
-  } else if (*cursor == 'b') {
+  }
+  else if (*cursor == 'b') {
     POSITION_SIDE = COLOR_BLACK;
-  } else {
+  }
+  else {
     goto fail;
   }
 
@@ -291,7 +293,8 @@ uint8_t position_from_fen(const char *fen)
 
   if (*cursor == '-') {
     ++cursor;
-  } else {
+  }
+  else {
     while (*cursor != ' ' && *cursor != '\0') {
       switch (*cursor++) {
         case 'K':
@@ -323,7 +326,8 @@ uint8_t position_from_fen(const char *fen)
   if (*cursor == '-') {
     POSITION_EP_SQUARE = SQUARE_NONE;
     ++cursor;
-  } else {
+  }
+  else {
     uint8_t ep_file;
     uint8_t ep_rank;
 
@@ -352,18 +356,16 @@ uint8_t position_from_fen(const char *fen)
     }
 
     while (*cursor >= '0' && *cursor <= '9') {
+      // clever little trick for multiplying by 10
       value = (value << 3) + (value << 1);
       value += *cursor - '0';
-
-      if (value > 255u) {
-        value = 255u;
-      }
 
       ++cursor;
     }
 
     POSITION_HALFMOVE = value;
-  } else if (*cursor != '\0') {
+  }
+  else if (*cursor != '\0') {
     goto fail;
   }
 
