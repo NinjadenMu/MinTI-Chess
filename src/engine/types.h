@@ -55,7 +55,7 @@ enum {
  * Bits 4 through 6 encode rank, bits 0 through 2 encode file.  
  * Bits 3 and 7 are only set for off-board (overflow) squares.
  *
- * Rank zero is rank 1. File zero is file a.
+ * `rank` zero is rank 1 on the board. `file` zero is file a on the board.
  */
 #define SQUARE(file, rank) \
   ((uint8_t)((((uint8_t)(rank)) << 4) | ((uint8_t)(file))))

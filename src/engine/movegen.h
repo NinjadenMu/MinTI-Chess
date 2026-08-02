@@ -1,7 +1,7 @@
 /**
  * @file movegen.h
  * 
- * Pseudo-legal move generation
+ * Staged pseudo-legal move generation
  */
 
 #ifndef MINTI_ENGINE_MOVEGEN_H
@@ -22,7 +22,7 @@
  */
 uint8_t movegen_generate(
   move_t *out,
-  unsigned int capacity,
+  uint8_t capacity,
   uint8_t stage
 );
 

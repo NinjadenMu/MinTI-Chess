@@ -1,3 +1,10 @@
+/**
+ * @file position.c
+ * 
+ * Implementation of position.h, implements basic utilities for reading and  
+ * setting state
+ */
+
 #include <stdint.h>
 #include <string.h>
 
