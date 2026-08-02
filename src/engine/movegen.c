@@ -23,7 +23,6 @@ uint8_t movegen_generate(
   uint8_t want_captures;
   uint8_t want_quiets;
   uint8_t ep_square;
-  uint8_t limit;
   uint8_t generated = 0;
   uint8_t index;
   uint8_t from;
@@ -38,10 +37,6 @@ uint8_t movegen_generate(
     return 0;
   }
 
-  limit = capacity == MOVEGEN_OVERFLOW
-    ? MOVEGEN_OVERFLOW - 1
-    : capacity;
-
   side = POSITION_SIDE;
   ep_square = want_captures ? POSITION_EP_SQUARE : SQUARE_NONE;
   piece_list = PIECE_LIST[COLOR_INDEX(side)];
@@ -49,7 +44,7 @@ uint8_t movegen_generate(
 
 #define EMIT_MOVE(destination_, flags_)                                        \
   do {                                                                         \
-    if (generated == limit) {                                                  \
+    if (generated == capacity) {                                               \
       return MOVEGEN_OVERFLOW;                                                 \
     }                                                                          \
                                                                                \

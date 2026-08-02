@@ -121,6 +121,22 @@ enum {
   GEN_ALL      = GEN_CAPTURES | GEN_QUIETS
 };
 
+// Attack masks used by DELTA_ATTACKERS
+enum {
+  ATK_WPAWN  = 0x01,
+  ATK_BPAWN  = 0x02,
+  ATK_KNIGHT = 0x04,
+  ATK_KING   = 0x08,
+  ATK_DIAG   = 0x10,
+  ATK_ORTH   = 0x20
+};
+
+// Index delta tables with target_square - attacker_square + DELTA_TABLE_OFFSET
+#define DELTA_TABLE_OFFSET 119
+#define DELTA_TABLE_SIZE   239
+#define DELTA_TABLE_INDEX(delta) \
+  ((uint8_t)((delta) + DELTA_TABLE_OFFSET))
+
 static inline uint8_t piece_code_is_valid(uint8_t piece) {
   uint8_t type = PIECE_TYPE(piece);
   return
@@ -143,6 +159,7 @@ static inline uint8_t piece_is_enemy(uint8_t piece, uint8_t side)
     PIECE_COLOR(piece) != side;
 }
 
+// Default return value when move buffer overflows
 #define MOVEGEN_OVERFLOW 0xff
 
 #endif

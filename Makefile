@@ -2,7 +2,7 @@
 # Makefile Options
 # ----------------------------
 
-NAME = DEMO
+NAME = MINTI
 #ICON = icon.png
 DESCRIPTION = "MinTI Chess - The world's strongest TI-84 Plus CE chess engine"
 COMPRESSED = NO
