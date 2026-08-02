@@ -46,7 +46,7 @@ int main(void)
     dbg_printf("MinTI Chess initialized.\n");
     gfx_PrintStringXY("MinTI Chess initialized.", 8, 8);
 
-    position_from_fen("rnbqkbnr/pp1pp2p/2p3p1/4Pp2/8/2N5/PPPP1PPP/R1BQKBNR w KQkq f6 0 4");
+    position_from_fen("rnbqkb1r/pp2p2p/2pp1np1/4Pp2/8/2N2N2/PPPPBPPP/R1BQK2R w KQkq - 2 6");
     uint8_t move_count = movegen_generate(
       move_list_base[0],
       218,
