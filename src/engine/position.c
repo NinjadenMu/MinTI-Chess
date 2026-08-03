@@ -15,7 +15,7 @@
 
 void position_clear(void) {
   memset(BOARD, PIECE_EMPTY, 128);
-  memset(PIECE_LIST, SQUARE_NONE, 32u);
+  memset(PIECE_LIST, SQUARE_NONE, 32);
   memset(PIECE_INDEX, PIECE_INDEX_NONE, 128);
 
   PIECE_COUNT[0] = 0;

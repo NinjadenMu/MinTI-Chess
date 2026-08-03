@@ -296,7 +296,7 @@ void king_scan(uint8_t side, king_info_t *info)
     return;
   }
 
-#define PROBE_DIRECT_ CHECKER(delta_, attacker_)                               \
+#define PROBE_DIRECT_CHECKER(delta_, attacker_)                               \
   do {                                                                         \
     attacker_square = king_square + (delta_);                                  \
                                                                                \
