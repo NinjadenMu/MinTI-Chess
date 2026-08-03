@@ -64,35 +64,35 @@ uint8_t square_is_attacked(
   } while (0)
 
   if (attacking_side == COLOR_WHITE) {
-    PROBE_ATTACKER(-15, pawn);
-    PROBE_ATTACKER(-17, pawn);
+    PROBE_DIRECT_ATTACKER(-15, pawn);
+    PROBE_DIRECT_ATTACKER(-17, pawn);
   }
   else {
-    PROBE_ATTACKER(15, pawn);
-    PROBE_ATTACKER(17, pawn);
+    PROBE_DIRECT_ATTACKER(15, pawn);
+    PROBE_DIRECT_ATTACKER(17, pawn);
   }
 
-  PROBE_ATTACKER(-33, knight);
-  PROBE_ATTACKER(-31, knight);
-  PROBE_ATTACKER(-18, knight);
-  PROBE_ATTACKER(-14, knight);
-  PROBE_ATTACKER(14, knight);
-  PROBE_ATTACKER(18, knight);
-  PROBE_ATTACKER(31, knight);
-  PROBE_ATTACKER(33, knight);
+  PROBE_DIRECT_ATTACKER(-33, knight);
+  PROBE_DIRECT_ATTACKER(-31, knight);
+  PROBE_DIRECT_ATTACKER(-18, knight);
+  PROBE_DIRECT_ATTACKER(-14, knight);
+  PROBE_DIRECT_ATTACKER(14, knight);
+  PROBE_DIRECT_ATTACKER(18, knight);
+  PROBE_DIRECT_ATTACKER(31, knight);
+  PROBE_DIRECT_ATTACKER(33, knight);
 
   /*
    * This function is used for validating moves, so we have to check the 
    * opposing king
    */
-  PROBE_ATTACKER(-17, king);
-  PROBE_ATTACKER(-16, king);
-  PROBE_ATTACKER(-15, king);
-  PROBE_ATTACKER(-1, king);
-  PROBE_ATTACKER(1, king);
-  PROBE_ATTACKER(15, king);
-  PROBE_ATTACKER(16, king);
-  PROBE_ATTACKER(17, king);
+  PROBE_DIRECT_ATTACKER(-17, king);
+  PROBE_DIRECT_ATTACKER(-16, king);
+  PROBE_DIRECT_ATTACKER(-15, king);
+  PROBE_DIRECT_ATTACKER(-1, king);
+  PROBE_DIRECT_ATTACKER(1, king);
+  PROBE_DIRECT_ATTACKER(15, king);
+  PROBE_DIRECT_ATTACKER(16, king);
+  PROBE_DIRECT_ATTACKER(17, king);
 
   PROBE_RAY(15, bishop);
   PROBE_RAY(17, bishop);
@@ -105,7 +105,7 @@ uint8_t square_is_attacked(
   PROBE_RAY(-16, rook);
 
 #undef PROBE_RAY
-#undef PROBE_ATTACKER
+#undef PROBE_DIRECT_ATTACKER
 
   return 0;
 }
@@ -296,7 +296,7 @@ void king_scan(uint8_t side, king_info_t *info)
     return;
   }
 
-#define PROBE_CHECKER(delta_, attacker_)                                       \
+#define PROBE_DIRECT_ CHECKER(delta_, attacker_)                               \
   do {                                                                         \
     attacker_square = king_square + (delta_);                                  \
                                                                                \
@@ -310,31 +310,31 @@ void king_scan(uint8_t side, king_info_t *info)
   } while (0)
 
   if (enemy == COLOR_WHITE) {
-    PROBE_CHECKER(-15, enemy_pawn);
-    PROBE_CHECKER(-17, enemy_pawn);
+    PROBE_DIRECT_CHECKER(-15, enemy_pawn);
+    PROBE_DIRECT_CHECKER(-17, enemy_pawn);
   }
   else {
-    PROBE_CHECKER(15, enemy_pawn);
-    PROBE_CHECKER(17, enemy_pawn);
+    PROBE_DIRECT_CHECKER(15, enemy_pawn);
+    PROBE_DIRECT_CHECKER(17, enemy_pawn);
   }
 
-  PROBE_CHECKER(-33, enemy_knight);
-  PROBE_CHECKER(-31, enemy_knight);
-  PROBE_CHECKER(-18, enemy_knight);
-  PROBE_CHECKER(-14, enemy_knight);
-  PROBE_CHECKER(14, enemy_knight);
-  PROBE_CHECKER(18, enemy_knight);
-  PROBE_CHECKER(31, enemy_knight);
-  PROBE_CHECKER(33, enemy_knight);
+  PROBE_DIRECT_CHECKER(-33, enemy_knight);
+  PROBE_DIRECT_CHECKER(-31, enemy_knight);
+  PROBE_DIRECT_CHECKER(-18, enemy_knight);
+  PROBE_DIRECT_CHECKER(-14, enemy_knight);
+  PROBE_DIRECT_CHECKER(14, enemy_knight);
+  PROBE_DIRECT_CHECKER(18, enemy_knight);
+  PROBE_DIRECT_CHECKER(31, enemy_knight);
+  PROBE_DIRECT_CHECKER(33, enemy_knight);
 
-  PROBE_CHECKER(-17, enemy_king);
-  PROBE_CHECKER(-16, enemy_king);
-  PROBE_CHECKER(-15, enemy_king);
-  PROBE_CHECKER(-1, enemy_king);
-  PROBE_CHECKER(1, enemy_king);
-  PROBE_CHECKER(15, enemy_king);
-  PROBE_CHECKER(16, enemy_king);
-  PROBE_CHECKER(17, enemy_king);
+  PROBE_DIRECT_CHECKER(-17, enemy_king);
+  PROBE_DIRECT_CHECKER(-16, enemy_king);
+  PROBE_DIRECT_CHECKER(-15, enemy_king);
+  PROBE_DIRECT_CHECKER(-1, enemy_king);
+  PROBE_DIRECT_CHECKER(1, enemy_king);
+  PROBE_DIRECT_CHECKER(15, enemy_king);
+  PROBE_DIRECT_CHECKER(16, enemy_king);
+  PROBE_DIRECT_CHECKER(17, enemy_king);
 
-#undef PROBE_CHECKER
+#undef PROBE_DIRECT_CHECKER
 }

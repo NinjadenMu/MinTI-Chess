@@ -1,7 +1,8 @@
 /**
  * @file attack.h
  * 
- * Attack, check, pin detection speeding up legality checking
+ * Attack, check, pin detection for speeding up move generation and legality 
+ * checking
  */
 
 #ifndef MINTI_ENGINE_ATTACK_H
