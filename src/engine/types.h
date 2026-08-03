@@ -159,7 +159,11 @@ static inline uint8_t piece_is_enemy(uint8_t piece, uint8_t side)
     PIECE_COLOR(piece) != side;
 }
 
-// Default return value when move buffer overflows
+/*
+ * Return value for if move buffer overflows, distinguishable from number 
+ * of moves generated since the upper bound of pseudolegal moves in reachable 
+ * positions is ~225 (exact number not known though)
+ */
 #define MOVEGEN_OVERFLOW 0xff
 
 #endif

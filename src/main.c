@@ -9,12 +9,10 @@
 
 #include "debug.h"
 #include <graphx.h>
+#include <ti/getcsc.h>
 
 #include "engine/engine.h"
-#include "engine/movegen.h"
-#include "engine/position.h"
-#include "engine/storage.h"
-#include "engine/types.h"
+#include "test/perft_tests.h"
 
 /*
  * Sets up workspaces for engine, main control loop
@@ -46,16 +44,18 @@ int main(void)
     dbg_printf("MinTI Chess initialized.\n");
     gfx_PrintStringXY("MinTI Chess initialized.", 8, 8);
 
-    position_from_fen("rnbqkb1r/pp2p2p/2pp1np1/4Pp2/8/2N2N2/PPPPBPPP/R1BQK2R w KQkq - 2 6");
-    uint8_t move_count = movegen_generate(
-      move_list_base[0],
-      218,
-      GEN_ALL
+    gfx_PrintStringXY("MinTI Chess initialized.", 8, 8);
+
+    run_perft_tests();
+
+    gfx_PrintStringXY(
+      "Press any key to exit.",
+      8,
+      216
     );
 
-    dbg_printf(
-      "%u\n", move_count
-    );
+    while (!os_GetCSC()) {
+    }
   }
 
   gfx_End();
