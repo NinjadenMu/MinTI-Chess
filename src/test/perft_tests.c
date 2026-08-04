@@ -1,6 +1,6 @@
 /**
  * @file perft_tests.c
- *
+ * 
  * Implementation of perft_tests.h
  */
 

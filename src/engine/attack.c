@@ -16,19 +16,10 @@ uint8_t square_is_attacked(
 )
 {
   uint8_t *const board = BOARD;
-  uint8_t attacker_square;
-  uint8_t piece;
-
-  uint8_t pawn = attacking_side | PIECE_PAWN;
-  uint8_t knight = attacking_side | PIECE_KNIGHT;
-  uint8_t king = attacking_side | PIECE_KING;
-  uint8_t bishop = attacking_side | PIECE_BISHOP;
-  uint8_t rook = attacking_side | PIECE_ROOK;
-  uint8_t queen = attacking_side | PIECE_QUEEN;
 
 #define PROBE_DIRECT_ATTACKER(delta_, attacker_)                               \
   do {                                                                         \
-    attacker_square = square + (delta_);                                       \
+    uint8_t attacker_square = square + (delta_);                               \
                                                                                \
     if (                                                                       \
       !SQUARE_OFFBOARD(attacker_square) &&                                     \
@@ -40,7 +31,7 @@ uint8_t square_is_attacked(
 
 #define PROBE_RAY(delta_, slider_)                                             \
   do {                                                                         \
-    attacker_square = square;                                                  \
+    uint8_t attacker_square = square;                                          \
                                                                                \
     while (1) {                                                                \
       attacker_square = attacker_square + (delta_);                            \
@@ -49,7 +40,7 @@ uint8_t square_is_attacked(
         break;                                                                 \
       }                                                                        \
                                                                                \
-      piece = board[attacker_square];                                          \
+      uint8_t piece = board[attacker_square];                                  \
                                                                                \
       if (piece == PIECE_EMPTY) {                                              \
         continue;                                                              \
@@ -63,6 +54,8 @@ uint8_t square_is_attacked(
     }                                                                          \
   } while (0)
 
+  uint8_t pawn = attacking_side | PIECE_PAWN;
+
   if (attacking_side == COLOR_WHITE) {
     PROBE_DIRECT_ATTACKER(-15, pawn);
     PROBE_DIRECT_ATTACKER(-17, pawn);
@@ -71,6 +64,8 @@ uint8_t square_is_attacked(
     PROBE_DIRECT_ATTACKER(15, pawn);
     PROBE_DIRECT_ATTACKER(17, pawn);
   }
+
+  uint8_t knight = attacking_side | PIECE_KNIGHT;
 
   PROBE_DIRECT_ATTACKER(-33, knight);
   PROBE_DIRECT_ATTACKER(-31, knight);
@@ -82,9 +77,11 @@ uint8_t square_is_attacked(
   PROBE_DIRECT_ATTACKER(33, knight);
 
   /*
-   * This function is used for validating moves, so we have to check the 
+   * This function is used for validating moves, so we have to check the
    * opposing king
    */
+  uint8_t king = attacking_side | PIECE_KING;
+
   PROBE_DIRECT_ATTACKER(-17, king);
   PROBE_DIRECT_ATTACKER(-16, king);
   PROBE_DIRECT_ATTACKER(-15, king);
@@ -94,10 +91,15 @@ uint8_t square_is_attacked(
   PROBE_DIRECT_ATTACKER(16, king);
   PROBE_DIRECT_ATTACKER(17, king);
 
+  uint8_t bishop = attacking_side | PIECE_BISHOP;
+  uint8_t queen = attacking_side | PIECE_QUEEN;
+
   PROBE_RAY(15, bishop);
   PROBE_RAY(17, bishop);
   PROBE_RAY(-15, bishop);
   PROBE_RAY(-17, bishop);
+
+  uint8_t rook = attacking_side | PIECE_ROOK;
 
   PROBE_RAY(1, rook);
   PROBE_RAY(-1, rook);
@@ -149,16 +151,13 @@ static inline uint8_t scan_king_ray(
   uint8_t pin_candidate = SQUARE_NONE;
 
   while (1) {
-    uint8_t piece;
-    uint8_t type;
-
     square = square + direction;
 
     if (SQUARE_OFFBOARD(square)) {
       return 0;
     }
 
-    piece = board[square];
+    uint8_t piece = board[square];
 
     if (piece == PIECE_EMPTY) {
       continue;
@@ -173,7 +172,7 @@ static inline uint8_t scan_king_ray(
       continue;
     }
 
-    type = PIECE_TYPE(piece);
+    uint8_t type = PIECE_TYPE(piece);
 
     if (type != slider_type && type != PIECE_QUEEN) {
       return 0;
@@ -200,11 +199,6 @@ void king_scan(uint8_t side, king_info_t *info)
   uint8_t *const board = BOARD;
   uint8_t enemy = OPPOSITE_COLOR(side);
   uint8_t king_square = KING_SQUARE[COLOR_INDEX(side)];
-  uint8_t attacker_square;
-
-  uint8_t enemy_pawn = enemy | PIECE_PAWN;
-  uint8_t enemy_knight = enemy | PIECE_KNIGHT;
-  uint8_t enemy_king = enemy | PIECE_KING;
 
   info->n_checkers = 0;
   info->checker_sq = SQUARE_NONE;
@@ -296,9 +290,9 @@ void king_scan(uint8_t side, king_info_t *info)
     return;
   }
 
-#define PROBE_DIRECT_CHECKER(delta_, attacker_)                               \
+#define PROBE_DIRECT_CHECKER(delta_, attacker_)                                \
   do {                                                                         \
-    attacker_square = king_square + (delta_);                                  \
+    uint8_t attacker_square = king_square + (delta_);                          \
                                                                                \
     if (                                                                       \
       !SQUARE_OFFBOARD(attacker_square) &&                                     \
@@ -309,6 +303,8 @@ void king_scan(uint8_t side, king_info_t *info)
     }                                                                          \
   } while (0)
 
+  uint8_t enemy_pawn = enemy | PIECE_PAWN;
+
   if (enemy == COLOR_WHITE) {
     PROBE_DIRECT_CHECKER(-15, enemy_pawn);
     PROBE_DIRECT_CHECKER(-17, enemy_pawn);
@@ -318,6 +314,8 @@ void king_scan(uint8_t side, king_info_t *info)
     PROBE_DIRECT_CHECKER(17, enemy_pawn);
   }
 
+  uint8_t enemy_knight = enemy | PIECE_KNIGHT;
+
   PROBE_DIRECT_CHECKER(-33, enemy_knight);
   PROBE_DIRECT_CHECKER(-31, enemy_knight);
   PROBE_DIRECT_CHECKER(-18, enemy_knight);
@@ -326,6 +324,8 @@ void king_scan(uint8_t side, king_info_t *info)
   PROBE_DIRECT_CHECKER(18, enemy_knight);
   PROBE_DIRECT_CHECKER(31, enemy_knight);
   PROBE_DIRECT_CHECKER(33, enemy_knight);
+
+  uint8_t enemy_king = enemy | PIECE_KING;
 
   PROBE_DIRECT_CHECKER(-17, enemy_king);
   PROBE_DIRECT_CHECKER(-16, enemy_king);

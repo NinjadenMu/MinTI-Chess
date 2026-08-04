@@ -1,9 +1,10 @@
 /**
  * @file perft.c
- *
+ * 
  * Implementation of perft.h
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "../config.h"
@@ -92,8 +93,9 @@ static uint8_t perft_search(
 
     unmake_move(move, &undo_stack[ply]);
 
-    if (status)
+    if (status) {
       return status;
+    }
 
     total += child_nodes;
   }
@@ -104,13 +106,15 @@ static uint8_t perft_search(
 
 uint8_t perft_count(uint8_t depth, uint24_t *nodes)
 {
-  if (nodes == 0)
+  if (nodes == NULL) {
     return 1;
+  }
 
   *nodes = 0;
 
-  if (depth > MAX_PLY)
+  if (depth > MAX_PLY) {
     return 1;
+  }
 
   move_list_base[0] = move_arena;
 

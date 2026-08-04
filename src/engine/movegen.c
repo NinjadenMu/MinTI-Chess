@@ -1,6 +1,6 @@
 /**
  * @file movegen.c
- *
+ * 
  * Implementation of movegen.h, staged pseudolegal move generation
  */
 
@@ -17,30 +17,18 @@ uint8_t movegen_generate(
 )
 {
   uint8_t *const board = BOARD;
-  uint8_t *piece_list;
-  uint8_t side;
-  uint8_t piece_count;
-  uint8_t want_captures;
-  uint8_t want_quiets;
-  uint8_t ep_square;
-  uint8_t generated = 0;
-  uint8_t index;
-  uint8_t from;
-  uint8_t to;
-  uint8_t target;
-  uint8_t rank;
-
-  want_captures = stage & GEN_CAPTURES;
-  want_quiets = stage & GEN_QUIETS;
+  uint8_t want_captures = stage & GEN_CAPTURES;
+  uint8_t want_quiets = stage & GEN_QUIETS;
 
   if (!(want_captures | want_quiets)) {
     return 0;
   }
 
-  side = POSITION_SIDE;
-  ep_square = want_captures ? POSITION_EP_SQUARE : SQUARE_NONE;
-  piece_list = PIECE_LIST[COLOR_INDEX(side)];
-  piece_count = PIECE_COUNT[COLOR_INDEX(side)];
+  uint8_t side = POSITION_SIDE;
+  uint8_t ep_square = want_captures ? POSITION_EP_SQUARE : SQUARE_NONE;
+  uint8_t *piece_list = PIECE_LIST[COLOR_INDEX(side)];
+  uint8_t piece_count = PIECE_COUNT[COLOR_INDEX(side)];
+  uint8_t generated = 0;
 
 #define EMIT_MOVE(destination_, flags_)                                        \
   do {                                                                         \
@@ -78,10 +66,10 @@ uint8_t movegen_generate(
 
 #define GENERATE_PAWN_CAPTURE(delta_, promotes_)                               \
   do {                                                                         \
-    to = from + delta_;                                                        \
+    uint8_t to = from + (delta_);                                              \
                                                                                \
     if (!SQUARE_OFFBOARD(to)) {                                                \
-      target = board[to];                                                      \
+      uint8_t target = board[to];                                              \
                                                                                \
       if (target != PIECE_EMPTY) {                                             \
         if ((target ^ side) & COLOR_BLACK) {                                   \
@@ -101,10 +89,10 @@ uint8_t movegen_generate(
 
 #define GENERATE_LEAPER_MOVE(delta_)                                           \
   do {                                                                         \
-    to = from + (delta_);                                                      \
+    uint8_t to = from + (delta_);                                              \
                                                                                \
     if (!SQUARE_OFFBOARD(to)) {                                                \
-      target = board[to];                                                      \
+      uint8_t target = board[to];                                              \
                                                                                \
       if (target == PIECE_EMPTY) {                                             \
         if (want_quiets) {                                                     \
@@ -122,7 +110,7 @@ uint8_t movegen_generate(
 
 #define GENERATE_RAY(delta_)                                                   \
   do {                                                                         \
-    to = from;                                                                 \
+    uint8_t to = from;                                                         \
                                                                                \
     while (1) {                                                                \
       to = to + (delta_);                                                      \
@@ -131,7 +119,7 @@ uint8_t movegen_generate(
         break;                                                                 \
       }                                                                        \
                                                                                \
-      target = board[to];                                                      \
+      uint8_t target = board[to];                                              \
                                                                                \
       if (target != PIECE_EMPTY) {                                             \
         if (                                                                   \
@@ -150,85 +138,87 @@ uint8_t movegen_generate(
     }                                                                          \
   } while (0)
 
-  for (index = 0; index < piece_count; ++index) {
-    from = piece_list[index];
+  for (uint8_t index = 0; index < piece_count; ++index) {
+    uint8_t from = piece_list[index];
 
     switch (PIECE_TYPE(board[from])) {
       case PIECE_PAWN:
-        rank = SQUARE_RANK(from);
+        {
+          uint8_t rank = SQUARE_RANK(from);
 
-        if (side == COLOR_WHITE) {
-          if (rank == 6) {
-            if (want_captures) {
-              GENERATE_PAWN_CAPTURE(15, 1);
-              GENERATE_PAWN_CAPTURE(17, 1);
+          if (side == COLOR_WHITE) {
+            if (rank == 6) {
+              if (want_captures) {
+                GENERATE_PAWN_CAPTURE(15, 1);
+                GENERATE_PAWN_CAPTURE(17, 1);
 
-              to = from + 16;
+                uint8_t to = from + 16;
 
-              if (board[to] == PIECE_EMPTY) {
-                EMIT_PROMOTIONS(to, MF_QUIET);
+                if (board[to] == PIECE_EMPTY) {
+                  EMIT_PROMOTIONS(to, MF_QUIET);
+                }
               }
-            }
-          } 
-          else {
-            if (want_captures) {
-              GENERATE_PAWN_CAPTURE(15, 0);
-              GENERATE_PAWN_CAPTURE(17, 0);
-            }
+            } 
+            else {
+              if (want_captures) {
+                GENERATE_PAWN_CAPTURE(15, 0);
+                GENERATE_PAWN_CAPTURE(17, 0);
+              }
 
-            if (want_quiets) {
-              to = from + 16;
+              if (want_quiets) {
+                uint8_t to = from + 16;
 
-              if (
-                !SQUARE_OFFBOARD(to) &&
-                board[to] == PIECE_EMPTY
-              ) {
-                EMIT_MOVE(to, MF_QUIET);
+                if (
+                  !SQUARE_OFFBOARD(to) &&
+                  board[to] == PIECE_EMPTY
+                ) {
+                  EMIT_MOVE(to, MF_QUIET);
 
-                if (rank == 1) {
-                  to = from + 32;
+                  if (rank == 1) {
+                    to = from + 32;
 
-                  if (board[to] == PIECE_EMPTY) {
-                    EMIT_MOVE(to, MF_DPUSH);
+                    if (board[to] == PIECE_EMPTY) {
+                      EMIT_MOVE(to, MF_DPUSH);
+                    }
                   }
                 }
               }
             }
-          }
-        } 
-        else {
-          if (rank == 1) {
-            if (want_captures) {
-              GENERATE_PAWN_CAPTURE(-17, 1);
-              GENERATE_PAWN_CAPTURE(-15, 1);
-
-              to = from - 16;
-
-              if (board[to] == PIECE_EMPTY) {
-                EMIT_PROMOTIONS(to, MF_QUIET);
-              }
-            }
           } 
           else {
-            if (want_captures) {
-              GENERATE_PAWN_CAPTURE(-17, 0);
-              GENERATE_PAWN_CAPTURE(-15, 0);
-            }
+            if (rank == 1) {
+              if (want_captures) {
+                GENERATE_PAWN_CAPTURE(-17, 1);
+                GENERATE_PAWN_CAPTURE(-15, 1);
 
-            if (want_quiets) {
-              to = from - 16;
+                uint8_t to = from - 16;
 
-              if (
-                !SQUARE_OFFBOARD(to) &&
-                board[to] == PIECE_EMPTY
-              ) {
-                EMIT_MOVE(to, MF_QUIET);
+                if (board[to] == PIECE_EMPTY) {
+                  EMIT_PROMOTIONS(to, MF_QUIET);
+                }
+              }
+            } 
+            else {
+              if (want_captures) {
+                GENERATE_PAWN_CAPTURE(-17, 0);
+                GENERATE_PAWN_CAPTURE(-15, 0);
+              }
 
-                if (rank == 6) {
-                  to = from - 32;
+              if (want_quiets) {
+                uint8_t to = from - 16;
 
-                  if (board[to] == PIECE_EMPTY) {
-                    EMIT_MOVE(to, MF_DPUSH);
+                if (
+                  !SQUARE_OFFBOARD(to) &&
+                  board[to] == PIECE_EMPTY
+                ) {
+                  EMIT_MOVE(to, MF_QUIET);
+
+                  if (rank == 6) {
+                    to = from - 32;
+
+                    if (board[to] == PIECE_EMPTY) {
+                      EMIT_MOVE(to, MF_DPUSH);
+                    }
                   }
                 }
               }

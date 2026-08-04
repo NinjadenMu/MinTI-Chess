@@ -1,6 +1,6 @@
 /**
  * @file perft_tests.h
- *
+ * 
  * Perft correctness and performance test harness
  */
 

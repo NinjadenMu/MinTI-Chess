@@ -32,29 +32,21 @@ static void mark_ray(
 }
 
 static void init_delta_tables(void) {
-  uint8_t distance;
-
   memset(DELTA_ATTACKERS, 0, DELTA_TABLE_SIZE);
   memset(DELTA_STEP, 0, DELTA_TABLE_SIZE);
 
-  for (distance = 1; distance <= 7; ++distance) {
-    int delta;
+  for (uint8_t distance = 1; distance <= 7; ++distance) {
+    mark_ray(distance, 1, ATK_ORTH);
+    mark_ray(-distance, -1, ATK_ORTH);
 
-    delta = distance;
-    mark_ray(delta, 1, ATK_ORTH);
-    mark_ray(-delta, -1, ATK_ORTH);
+    mark_ray(16 * distance, 16, ATK_ORTH);
+    mark_ray(-16 * distance, -16, ATK_ORTH);
 
-    delta = 16 * distance;
-    mark_ray(delta, 16, ATK_ORTH);
-    mark_ray(-delta, -16, ATK_ORTH);
+    mark_ray(15 * distance, 15, ATK_DIAG);
+    mark_ray(-15 * distance, -15, ATK_DIAG);
 
-    delta = 15 * distance;
-    mark_ray(delta, 15, ATK_DIAG);
-    mark_ray(-delta, -15, ATK_DIAG);
-
-    delta = 17 * distance;
-    mark_ray(delta, 17, ATK_DIAG);
-    mark_ray(-delta, -17, ATK_DIAG);
+    mark_ray(17 * distance, 17, ATK_DIAG);
+    mark_ray(-17 * distance, -17, ATK_DIAG);
   }
 
   mark_attack(15, ATK_WPAWN);

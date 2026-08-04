@@ -48,7 +48,7 @@ uint8_t position_add_piece(uint8_t square, uint8_t piece)
   if (list_index >= 16) {
     return 1;
   }
-  // Don't add a second king of the same color
+  // don't add a second king of the same color
   if (
     PIECE_TYPE(piece) == PIECE_KING &&
     KING_SQUARE[color_index] != SQUARE_NONE
@@ -384,27 +384,22 @@ uint8_t position_is_consistent(void)
 {
   uint8_t board_count[2] = { 0, 0 };
   uint8_t found_king[2] = { SQUARE_NONE, SQUARE_NONE };
-  uint8_t color_index;
-  uint8_t rank;
-  uint8_t file;
 
-  for (color_index = 0; color_index < 2; ++color_index) {
+  for (uint8_t color_index = 0; color_index < 2; ++color_index) {
     uint8_t count = PIECE_COUNT[color_index];
-    uint8_t index;
 
     if (count > 16) {
       return 0;
     }
 
-    for (index = 0; index < count; ++index) {
+    for (uint8_t index = 0; index < count; ++index) {
       uint8_t square = PIECE_LIST[color_index][index];
-      uint8_t piece;
 
       if (SQUARE_OFFBOARD(square)) {
         return 0;
       }
 
-      piece = BOARD[square];
+      uint8_t piece = BOARD[square];
 
       if (
         piece == PIECE_EMPTY ||
@@ -416,8 +411,8 @@ uint8_t position_is_consistent(void)
     }
   }
 
-  for (rank = 0; rank < 8; ++rank) {
-    for (file = 0; file < 8; ++file) {
+  for (uint8_t rank = 0; rank < 8; ++rank) {
+    for (uint8_t file = 0; file < 8; ++file) {
       uint8_t square = SQUARE(file, rank);
       uint8_t piece = BOARD[square];
 
@@ -433,7 +428,7 @@ uint8_t position_is_consistent(void)
         return 0;
       }
 
-      color_index = COLOR_INDEX(PIECE_COLOR(piece));
+      uint8_t color_index = COLOR_INDEX(PIECE_COLOR(piece));
 
       if (
         PIECE_INDEX[square] >= PIECE_COUNT[color_index] ||

@@ -44,8 +44,6 @@ int main(void)
     dbg_printf("MinTI Chess initialized.\n");
     gfx_PrintStringXY("MinTI Chess initialized.", 8, 8);
 
-    gfx_PrintStringXY("MinTI Chess initialized.", 8, 8);
-
     run_perft_tests();
 
     gfx_PrintStringXY(

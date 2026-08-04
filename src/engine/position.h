@@ -42,7 +42,7 @@ uint8_t position_move_piece(uint8_t from, uint8_t to);
 
 static inline uint8_t position_piece_at(uint8_t square)
 {
-    return BOARD[square];
+  return BOARD[square];
 }
 
 uint8_t position_is_consistent(void);

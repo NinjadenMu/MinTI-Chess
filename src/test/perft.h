@@ -1,6 +1,6 @@
 /**
  * @file perft.h
- *
+ * 
  * Legal move generation correctness testing
  */
 
