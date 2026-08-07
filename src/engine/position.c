@@ -137,7 +137,6 @@ uint8_t position_move_piece(uint8_t from, uint8_t to)
   return 0;
 }
 
-__attribute__((noinline, optnone))
 uint8_t position_set_start(void)
 {
   static const uint8_t back_rank[8] = {

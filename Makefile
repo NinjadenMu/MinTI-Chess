@@ -7,8 +7,8 @@ NAME = MINTI
 DESCRIPTION = "MinTI Chess - The world's strongest TI-84 Plus CE chess engine"
 COMPRESSED = NO
 
-CFLAGS = -Wall -Wextra -O3
-CXXFLAGS = -Wall -Wextra -O3
+CFLAGS = -Wall -Wextra -O3 -fno-omit-frame-pointer
+CXXFLAGS = -Wall -Wextra -O3 -fno-omit-frame-pointer
 
 # ----------------------------
 
