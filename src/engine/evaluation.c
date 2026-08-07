@@ -662,6 +662,12 @@ void evaluation_clear(void)
     0,
     2
   );
+
+  memset(
+    EVAL_ROOK_FILE_COUNT,
+    0,
+    16
+  );
 }
 
 //__attribute__((noinline, optnone))
