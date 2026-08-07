@@ -10,6 +10,7 @@
 #include "../config.h"
 #include "../ce/memory_map.h"
 #include "engine.h"
+#include "evaluation.h"
 #include "position.h"
 #include "storage.h"
 #include "types.h"
@@ -74,6 +75,7 @@ static void init_delta_tables(void) {
 }
 
 uint8_t engine_init(void) {
+  evaluation_init();
   init_delta_tables();
 
   memset(move_list_base, 0, sizeof(move_list_base));

@@ -8,12 +8,14 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "../config.h"
 #include "../ce/memory_map.h"
+#include "../config.h"
+#include "evaluation.h"
 #include "position.h"
 #include "types.h"
 
-void position_clear(void) {
+void position_clear(void)
+{
   memset(BOARD, PIECE_EMPTY, 128);
   memset(PIECE_LIST, SQUARE_NONE, 32);
   memset(PIECE_INDEX, PIECE_INDEX_NONE, 128);
@@ -21,13 +23,15 @@ void position_clear(void) {
   PIECE_COUNT[0] = 0;
   PIECE_COUNT[1] = 0;
 
-  KING_SQUARE[0] = SQUARE_NONE;
-  KING_SQUARE[1] = SQUARE_NONE;
+  POSITION_KING_SQUARE[0] = SQUARE_NONE;
+  POSITION_KING_SQUARE[1] = SQUARE_NONE;
 
   POSITION_SIDE = COLOR_WHITE;
   POSITION_CASTLING = 0;
   POSITION_EP_SQUARE = SQUARE_NONE;
   POSITION_HALFMOVE = 0;
+
+  evaluation_clear();
 }
 
 uint8_t position_add_piece(uint8_t square, uint8_t piece)
@@ -51,7 +55,7 @@ uint8_t position_add_piece(uint8_t square, uint8_t piece)
   // don't add a second king of the same color
   if (
     PIECE_TYPE(piece) == PIECE_KING &&
-    KING_SQUARE[color_index] != SQUARE_NONE
+    POSITION_KING_SQUARE[color_index] != SQUARE_NONE
   ) {
     return 1;
   }
@@ -62,8 +66,10 @@ uint8_t position_add_piece(uint8_t square, uint8_t piece)
   PIECE_COUNT[color_index] = list_index + 1;
 
   if (PIECE_TYPE(piece) == PIECE_KING) {
-    KING_SQUARE[color_index] = square;
+    POSITION_KING_SQUARE[color_index] = square;
   }
+
+  evaluation_add_piece(piece, square);
 
   return 0;
 }
@@ -79,6 +85,8 @@ uint8_t position_remove_piece(uint8_t square)
     return PIECE_EMPTY;
   }
 
+  evaluation_remove_piece(piece, square);
+
   uint8_t color_index = COLOR_INDEX(PIECE_COLOR(piece));
   uint8_t list_index = PIECE_INDEX[square];
   uint8_t last_index = PIECE_COUNT[color_index] - 1;
@@ -92,7 +100,7 @@ uint8_t position_remove_piece(uint8_t square)
   PIECE_INDEX[square] = PIECE_INDEX_NONE;
 
   if (PIECE_TYPE(piece) == PIECE_KING) {
-    KING_SQUARE[color_index] = SQUARE_NONE;
+    POSITION_KING_SQUARE[color_index] = SQUARE_NONE;
   }
 
   return piece;
@@ -110,6 +118,8 @@ uint8_t position_move_piece(uint8_t from, uint8_t to)
     return 1;
   }
 
+  evaluation_move_piece(piece, from, to);
+  
   uint8_t color_index = COLOR_INDEX(PIECE_COLOR(piece));
   uint8_t list_index = PIECE_INDEX[from];
 
@@ -121,7 +131,7 @@ uint8_t position_move_piece(uint8_t from, uint8_t to)
   PIECE_INDEX[from] = PIECE_INDEX_NONE;
 
   if (PIECE_TYPE(piece) == PIECE_KING) {
-    KING_SQUARE[color_index] = to;
+    POSITION_KING_SQUARE[color_index] = to;
   }
 
   return 0;
@@ -459,8 +469,8 @@ uint8_t position_is_consistent(void)
   if (
     found_king[0] == SQUARE_NONE ||
     found_king[1] == SQUARE_NONE ||
-    found_king[0] != KING_SQUARE[0] ||
-    found_king[1] != KING_SQUARE[1]
+    found_king[0] != POSITION_KING_SQUARE[0] ||
+    found_king[1] != POSITION_KING_SQUARE[1]
   ) {
     return 0;
   }

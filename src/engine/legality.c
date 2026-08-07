@@ -26,7 +26,7 @@ static uint8_t en_passant_is_legal(const move_t *move)
 {
   uint8_t side = PIECE_COLOR(BOARD[move->from]);
   uint8_t enemy = OPPOSITE_COLOR(side);
-  uint8_t king_square = KING_SQUARE[COLOR_INDEX(side)];
+  uint8_t king_square = POSITION_KING_SQUARE[COLOR_INDEX(side)];
 
   make_move(move, &ep_undo);
 
@@ -136,7 +136,7 @@ uint8_t move_is_legal(
   }
 
   uint8_t king_square =
-    KING_SQUARE[COLOR_INDEX(PIECE_COLOR(piece))];
+    POSITION_KING_SQUARE[COLOR_INDEX(PIECE_COLOR(piece))];
 
   // blockers should be along the direction of the check
   if (

@@ -198,7 +198,7 @@ void king_scan(uint8_t side, king_info_t *info)
 {
   uint8_t *const board = BOARD;
   uint8_t enemy = OPPOSITE_COLOR(side);
-  uint8_t king_square = KING_SQUARE[COLOR_INDEX(side)];
+  uint8_t king_square = POSITION_KING_SQUARE[COLOR_INDEX(side)];
 
   info->n_checkers = 0;
   info->checker_sq = SQUARE_NONE;

@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include "../ce/memory_map.h"
+#include "evaluation.h"
 #include "make_move.h"
 #include "types.h"
 
@@ -58,15 +59,17 @@ void make_move(const move_t *move, undo_t *undo)
   uint8_t castling = POSITION_CASTLING;
   uint8_t halfmove = POSITION_HALFMOVE;
   uint8_t captured = PIECE_EMPTY;
+  uint8_t captured_square = SQUARE_NONE;
 
   undo->ep_square = POSITION_EP_SQUARE;
   undo->castling = castling;
   undo->halfmove = halfmove;
 
   if (flags & MF_CAPTURE) {
-    uint8_t captured_square = flags & MF_EP
+    captured_square = flags & MF_EP
       ? (side == COLOR_WHITE ? to - 16 : to + 16)
       : to;
+
     uint8_t captured_index = piece_index[captured_square];
     uint8_t captured_color_index;
     uint8_t last_index;
@@ -83,15 +86,22 @@ void make_move(const move_t *move, undo_t *undo)
 
     board[captured_square] = PIECE_EMPTY;
     piece_index[captured_square] = PIECE_INDEX_NONE;
-
-    undo->captured_square = captured_square;
   }
 
   undo->captured = captured;
+  undo->captured_square = captured_square;
 
   uint8_t placed_piece = flags & MF_PROMO
     ? side | promotion_types[(flags & MF_PROMO_TYPE_MASK) >> 5]
     : piece;
+
+  evaluation_make_move(
+    move,
+    piece,
+    placed_piece,
+    captured,
+    captured_square
+  );
 
   board[from] = PIECE_EMPTY;
   board[to] = placed_piece;
@@ -117,7 +127,7 @@ void make_move(const move_t *move, undo_t *undo)
   }
 
   if (piece_type == PIECE_KING) {
-    KING_SQUARE[side_index] = to;
+    POSITION_KING_SQUARE[side_index] = to;
 
     castling &= side == COLOR_WHITE
       ? CASTLE_BLACK_KING | CASTLE_BLACK_QUEEN
@@ -128,7 +138,10 @@ void make_move(const move_t *move, undo_t *undo)
   }
 
   if (PIECE_TYPE(captured) == PIECE_ROOK) {
-    castling = revoke_rook_castling(castling, undo->captured_square);
+    castling = revoke_rook_castling(
+      castling,
+      captured_square
+    );
   }
 
   POSITION_CASTLING = castling;
@@ -166,9 +179,18 @@ void unmake_move(const move_t *move, const undo_t *undo)
   uint8_t side = OPPOSITE_COLOR(POSITION_SIDE);
   uint8_t side_index = COLOR_INDEX(side);
   uint8_t moving_index = piece_index[to];
+  uint8_t placed_piece = board[to];
   uint8_t original_piece = flags & MF_PROMO
     ? side | PIECE_PAWN
-    : board[to];
+    : placed_piece;
+
+  evaluation_unmake_move(
+    move,
+    original_piece,
+    placed_piece,
+    undo->captured,
+    undo->captured_square
+  );
 
   board[to] = PIECE_EMPTY;
   board[from] = original_piece;
@@ -194,13 +216,14 @@ void unmake_move(const move_t *move, const undo_t *undo)
   }
 
   if (PIECE_TYPE(original_piece) == PIECE_KING) {
-    KING_SQUARE[side_index] = from;
+    POSITION_KING_SQUARE[side_index] = from;
   }
 
   if (undo->captured != PIECE_EMPTY) {
     uint8_t captured_color_index =
       COLOR_INDEX(PIECE_COLOR(undo->captured));
-    uint8_t append_index = PIECE_COUNT[captured_color_index];
+    uint8_t append_index =
+      PIECE_COUNT[captured_color_index];
 
     piece_list[captured_color_index][append_index] =
       undo->captured_square;
