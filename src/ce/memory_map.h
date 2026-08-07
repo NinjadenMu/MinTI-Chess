@@ -54,6 +54,7 @@
 #define CE_ADDR_NONPAWN_MATERIAL         0xD5313Au
 #define CE_ADDR_PAWN_FILE_COUNT          0xD53140u
 #define CE_ADDR_BISHOP_COUNT             0xD53150u
+#define CE_ADDR_ROOK_FILE_COUNT          0xD53152u
 
 #define CE_ADDR_PIECE_INDEX              0xD53200u
 
@@ -118,6 +119,9 @@
 
 #define EVAL_BISHOP_COUNT \
   ((uint8_t *)CE_ADDR_BISHOP_COUNT)
+
+#define EVAL_ROOK_FILE_COUNT \
+  ((uint8_t (*)[8])CE_ADDR_ROOK_FILE_COUNT)
 
 #define EVAL_PST_PAWN_OPENING \
   ((uint8_t *)CE_ADDR_PST_PAWN_OPENING)

@@ -32,8 +32,9 @@ enum {
   EVAL_QUEEN_VALUE  = 950,
 
   EVAL_DOUBLED_PAWN_PENALTY = 20,
-  EVAL_ISOLATED_PAWN_PENALTY = 15,
+  EVAL_ISOLATED_PAWN_PENALTY = 20,
   EVAL_BISHOP_PAIR_BONUS = 20,
+  EVAL_ROOK_OPEN_FILE_BONUS = 10,
 
   EVAL_TEMPO_BONUS = 10,
 
@@ -167,15 +168,48 @@ static inline uint24_t isolated_penalty(uint8_t count)
   return value * EVAL_ISOLATED_PAWN_PENALTY;
 }
 
+static inline uint24_t open_file_rook_bonus(uint8_t count)
+{
+  uint24_t value = count;
+
+  return value * EVAL_ROOK_OPEN_FILE_BONUS;
+}
+
+static inline uint8_t file_is_open(uint8_t file)
+{
+  uint8_t (*const pawn_counts)[8] =
+    EVAL_PAWN_FILE_COUNT;
+
+  return
+    pawn_counts[0][file] == 0 &&
+    pawn_counts[1][file] == 0;
+}
+
 static inline void add_pawn_file(
   uint8_t color_index,
   uint8_t file
 )
 {
+  uint8_t (*const pawn_counts)[8] =
+    EVAL_PAWN_FILE_COUNT;
   uint8_t *const counts =
-    EVAL_PAWN_FILE_COUNT[color_index];
+    pawn_counts[color_index];
+  uint8_t (*const rook_counts)[8] =
+    EVAL_ROOK_FILE_COUNT;
   uint24_t *const score = EVAL_SCORE;
   uint8_t count = counts[file];
+
+  if (
+    count == 0 &&
+    pawn_counts[color_index ^ 1][file] == 0
+  ) {
+    score[0] -= open_file_rook_bonus(
+      rook_counts[0][file]
+    );
+    score[1] -= open_file_rook_bonus(
+      rook_counts[1][file]
+    );
+  }
 
   if (count != 0) {
     score[color_index] -= EVAL_DOUBLED_PAWN_PENALTY;
@@ -220,10 +254,26 @@ static inline void remove_pawn_file(
   uint8_t file
 )
 {
+  uint8_t (*const pawn_counts)[8] =
+    EVAL_PAWN_FILE_COUNT;
   uint8_t *const counts =
-    EVAL_PAWN_FILE_COUNT[color_index];
+    pawn_counts[color_index];
+  uint8_t (*const rook_counts)[8] =
+    EVAL_ROOK_FILE_COUNT;
   uint24_t *const score = EVAL_SCORE;
   uint8_t count = counts[file];
+
+  if (
+    count == 1 &&
+    pawn_counts[color_index ^ 1][file] == 0
+  ) {
+    score[0] += open_file_rook_bonus(
+      rook_counts[0][file]
+    );
+    score[1] += open_file_rook_bonus(
+      rook_counts[1][file]
+    );
+  }
 
   if (count > 1) {
     score[color_index] += EVAL_DOUBLED_PAWN_PENALTY;
@@ -274,6 +324,8 @@ static inline void add_piece(
   uint24_t *const nonpawn_material =
     EVAL_NONPAWN_MATERIAL;
   uint8_t *const bishop_count = EVAL_BISHOP_COUNT;
+  uint8_t (*const rook_file_count)[8] =
+    EVAL_ROOK_FILE_COUNT;
 
   uint8_t color_index =
     COLOR_INDEX(PIECE_COLOR(piece));
@@ -331,13 +383,23 @@ static inline void add_piece(
       ++bishop_count[color_index];
       break;
 
-    case PIECE_ROOK:
+    case PIECE_ROOK: {
+      uint8_t file = SQUARE_FILE(square);
+
       ADD_NONPAWN(
         EVAL_ROOK_BASE,
         EVAL_ROOK_VALUE,
         EVAL_PST_ROOK
       );
+
+      ++rook_file_count[color_index][file];
+
+      if (file_is_open(file)) {
+        score[color_index] +=
+          EVAL_ROOK_OPEN_FILE_BONUS;
+      }
       break;
+    }
 
     case PIECE_QUEEN:
       ADD_NONPAWN(
@@ -365,6 +427,8 @@ static inline void remove_piece(
   uint24_t *const nonpawn_material =
     EVAL_NONPAWN_MATERIAL;
   uint8_t *const bishop_count = EVAL_BISHOP_COUNT;
+  uint8_t (*const rook_file_count)[8] =
+    EVAL_ROOK_FILE_COUNT;
 
   uint8_t color_index =
     COLOR_INDEX(PIECE_COLOR(piece));
@@ -422,13 +486,23 @@ static inline void remove_piece(
       );
       break;
 
-    case PIECE_ROOK:
+    case PIECE_ROOK: {
+      uint8_t file = SQUARE_FILE(square);
+
+      if (file_is_open(file)) {
+        score[color_index] -=
+          EVAL_ROOK_OPEN_FILE_BONUS;
+      }
+
+      --rook_file_count[color_index][file];
+
       REMOVE_NONPAWN(
         EVAL_ROOK_BASE,
         EVAL_ROOK_VALUE,
         EVAL_PST_ROOK
       );
       break;
+    }
 
     case PIECE_QUEEN:
       REMOVE_NONPAWN(
@@ -454,6 +528,8 @@ static inline void move_piece(
   uint24_t *const score = EVAL_SCORE;
   uint24_t (*const pawn_king_score)[2] =
     EVAL_PAWN_KING_SCORE;
+  uint8_t (*const rook_file_count)[8] =
+    EVAL_ROOK_FILE_COUNT;
 
   uint8_t color_index =
     COLOR_INDEX(PIECE_COLOR(piece));
@@ -519,12 +595,31 @@ static inline void move_piece(
       );
       break;
 
-    case PIECE_ROOK:
+    case PIECE_ROOK: {
+      uint8_t from_file = SQUARE_FILE(from);
+      uint8_t to_file = SQUARE_FILE(to);
+
       MOVE_PST(
         score[color_index],
         EVAL_PST_ROOK
       );
+
+      if (from_file != to_file) {
+        if (file_is_open(from_file)) {
+          score[color_index] -=
+            EVAL_ROOK_OPEN_FILE_BONUS;
+        }
+
+        --rook_file_count[color_index][from_file];
+        ++rook_file_count[color_index][to_file];
+
+        if (file_is_open(to_file)) {
+          score[color_index] +=
+            EVAL_ROOK_OPEN_FILE_BONUS;
+        }
+      }
       break;
+    }
 
     case PIECE_QUEEN:
       MOVE_PST(
