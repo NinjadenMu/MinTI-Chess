@@ -119,7 +119,7 @@ uint8_t position_move_piece(uint8_t from, uint8_t to)
   }
 
   evaluation_move_piece(piece, from, to);
-  
+
   uint8_t color_index = COLOR_INDEX(PIECE_COLOR(piece));
   uint8_t list_index = PIECE_INDEX[from];
 
@@ -137,6 +137,7 @@ uint8_t position_move_piece(uint8_t from, uint8_t to)
   return 0;
 }
 
+__attribute__((noinline, optnone))
 uint8_t position_set_start(void)
 {
   static const uint8_t back_rank[8] = {

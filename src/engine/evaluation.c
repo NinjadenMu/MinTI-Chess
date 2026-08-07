@@ -569,6 +569,7 @@ void evaluation_clear(void)
   );
 }
 
+__attribute__((noinline, optnone))
 void evaluation_init(void)
 {
   for (uint8_t table = 0; table < 8; ++table) {
@@ -683,6 +684,7 @@ void evaluation_unmake_move(
   }
 }
 
+__attribute__((noinline, optnone))
 eval_t evaluate_position(void)
 {
   uint24_t *const score = EVAL_SCORE;
