@@ -9,9 +9,11 @@
 
 #include <stdint.h>
 
+#include "hash.h"
 #include "types.h"
 
  typedef struct {
+  hash_key_t hash;
   uint8_t ep_square;
   uint8_t castling;
   uint8_t halfmove;
