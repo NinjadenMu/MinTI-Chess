@@ -45,6 +45,13 @@ static inline uint8_t position_piece_at(uint8_t square)
   return BOARD[square];
 }
 
+/**
+ * @brief Returns effective (legal) en-passant square
+ * 
+ * @return POSITION_EP_SQUARE when it's legal, otherwise SQUARE_NONE
+ */
+uint8_t position_legal_ep_square(void);
+
 uint8_t position_is_consistent(void);
 
 #endif

@@ -262,11 +262,10 @@ static uint8_t ep_capture_is_legal(
   return legal;
 }
 
-static uint8_t legal_ep_square(
-  uint8_t ep_square,
-  uint8_t side
-)
+uint8_t position_legal_ep_square(void)
 {
+  uint8_t ep_square = POSITION_EP_SQUARE;
+  uint8_t side = POSITION_SIDE;
   if (
     ep_square == SQUARE_NONE ||
     BOARD[ep_square] != PIECE_EMPTY
@@ -502,10 +501,7 @@ uint8_t position_from_fen(const char *fen)
     goto fail;
   }
 
-  POSITION_EP_SQUARE = legal_ep_square(
-    POSITION_EP_SQUARE,
-    POSITION_SIDE
-  );
+  POSITION_EP_SQUARE = position_legal_ep_square();
 
   hash_rebuild();
 

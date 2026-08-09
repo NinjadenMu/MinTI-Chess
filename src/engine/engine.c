@@ -12,6 +12,7 @@
 #include "engine.h"
 #include "evaluation.h"
 #include "position.h"
+#include "repetition.h"
 #include "storage.h"
 #include "types.h"
 
@@ -82,5 +83,10 @@ uint8_t engine_init(void) {
   memset(move_list_base, 0, sizeof(move_list_base));
   move_list_base[0] = move_arena;
 
-  return position_set_start();
+  uint8_t status = position_set_start();
+  if (!status) {
+    repetition_game_reset();
+  }
+
+  return status;
 }

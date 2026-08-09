@@ -192,6 +192,17 @@ void hash_move_piece(
   );
 }
 
+void hash_key_remove_ep_file(
+  hash_key_t *key,
+  uint8_t file
+)
+{
+  key_subtract(
+    key,
+    &ep_file_random[file].key
+  );
+}
+
 void hash_make_move(
   const move_t *move,
   uint8_t moving_piece,

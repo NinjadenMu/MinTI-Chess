@@ -61,6 +61,11 @@ void hash_move_piece(
   uint8_t to
 );
 
+void hash_key_remove_ep_file(
+  hash_key_t *key,
+  uint8_t file
+);
+
 /**
  * @brief Updates hash based on move
  *
@@ -72,9 +77,9 @@ void hash_move_piece(
  * While this technically should be fully legal, pseudolegal is much faster 
  * to check so it makes sense for search, and can't cause an incorrect 
  * transposition table entry to be read.  It's also exceedingly unlikely 
- * for it to cause 3-fold to be detected incorrectly, so it's worth the "risk" 
- * in search (and the actual game loop can simply do the more expensive 
- * legality check and add a bit to the hash).
+ * for it to cause incorrect 3-fold detection (also, it can only cause false 
+ * negatives), so it's worth the "risk" in search, and the actual game loop 
+ * can simply do the more expensive legality check and change the hash itself).
  */
 void hash_make_move(
   const move_t *move,
