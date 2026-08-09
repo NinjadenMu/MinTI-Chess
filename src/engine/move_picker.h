@@ -19,10 +19,13 @@ enum {
 
 typedef struct {
   move_t *moves;
+  move_t preferred;
   uint8_t capacity;
   uint8_t count;
   uint8_t index;
   uint8_t stage;
+  uint8_t has_preferred;
+  uint8_t preferred_pending;
 } move_picker_t;
 
 /**
@@ -31,11 +34,15 @@ typedef struct {
  * @param[out] picker - picker object to initialize
  * @param[in] moves - buffer for current stage's generated moves
  * @param[in] capacity - number of moves available in buffer
+ * @param[in] preferred - address of preferred move
+ * @param[in] has_preferred - preferred is used if 1, else preferred is ignored
  */
 void move_picker_init(
   move_picker_t *picker,
   move_t *moves,
-  uint8_t capacity
+  uint8_t capacity,
+  const move_t *preferred,
+  uint8_t has_preferred
 );
 
 /**

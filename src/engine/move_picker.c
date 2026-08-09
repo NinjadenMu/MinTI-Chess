@@ -25,7 +25,9 @@ static move_t *move_picker_pick(move_picker_t *picker)
 void move_picker_init(
   move_picker_t *picker,
   move_t *moves,
-  uint8_t capacity
+  uint8_t capacity,
+  const move_t preferred,
+  const uint8_t has_preferred
 )
 {
   picker->moves = moves;
@@ -33,6 +35,11 @@ void move_picker_init(
   picker->count = 0;
   picker->index = 0;
   picker->stage = PICKER_STAGE_CAPTURES;
+  picker->has_preferred = has_preferred;
+  picker->preferred_pending = has_preferred;
+  if (has_preferred) {
+    picker->preferred = preferred;
+  }
 }
 
 uint8_t move_picker_next(
@@ -40,7 +47,12 @@ uint8_t move_picker_next(
   move_t **move
 )
 {
-  *move = NULL;
+  if (picker->preferred_pending) {
+    picker->preferred_pending = 0;
+    *move = &picker->preferred;
+
+    return MOVE_PICKER_MOVE;
+  }
 
   while (picker->index == picker->count) {
     uint8_t generation_stage;
