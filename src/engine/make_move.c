@@ -8,6 +8,7 @@
 
 #include "../ce/memory_map.h"
 #include "evaluation.h"
+#include "hash.h"
 #include "make_move.h"
 #include "types.h"
 
@@ -61,6 +62,8 @@ void make_move(const move_t *move, undo_t *undo)
   uint8_t captured = PIECE_EMPTY;
   uint8_t captured_square = SQUARE_NONE;
 
+  undo->hash.part[0] = HASH.part[0];
+  undo->hash.part[1] = HASH.part[1];
   undo->ep_square = POSITION_EP_SQUARE;
   undo->castling = castling;
   undo->halfmove = halfmove;
@@ -144,14 +147,31 @@ void make_move(const move_t *move, undo_t *undo)
     );
   }
 
-  POSITION_CASTLING = castling;
-
+  uint8_t ep_square = SQUARE_NONE;
   if (flags & MF_DPUSH) {
-    POSITION_EP_SQUARE = (from + to) >> 1;
+    uint8_t enemy_pawn =
+      OPPOSITE_COLOR(side) | PIECE_PAWN;
+
+    if (
+      board[to - 1] == enemy_pawn ||
+      board[to + 1] == enemy_pawn
+    ) {
+      ep_square = (from + to) >> 1;
+    }
   }
-  else {
-    POSITION_EP_SQUARE = SQUARE_NONE;
-  }
+
+  hash_make_move(
+    move,
+    piece,
+    placed_piece,
+    captured,
+    captured_square,
+    castling,
+    ep_square
+  );
+
+  POSITION_CASTLING = castling;
+  POSITION_EP_SQUARE = ep_square;
 
   if (
     piece_type == PIECE_PAWN ||
@@ -233,6 +253,7 @@ void unmake_move(const move_t *move, const undo_t *undo)
     board[undo->captured_square] = undo->captured;
   }
 
+  hash_restore(&undo->hash);
   POSITION_EP_SQUARE = undo->ep_square;
   POSITION_CASTLING = undo->castling;
   POSITION_HALFMOVE = undo->halfmove;

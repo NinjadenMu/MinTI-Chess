@@ -65,9 +65,16 @@ void hash_move_piece(
  * @brief Updates hash based on move
  *
  * POSITION_SIDE, POSITION_CASTLING and POSITION_EP_SQUARE must still contain
- * their pre-move values. new_ep_square should be the effective en-passant 
- * target, since otherwise positions with different legality for en-passant 
- * but same board state would collide.
+ * their pre-move values. new_ep_square should be the pseudolegal 
+ * en-passant target, since otherwise positions with different pseudolegality 
+ * for en-passant but otherwise equivalent board state could collide.
+ * 
+ * While this technically should be fully legal, pseudolegal is much faster 
+ * to check so it makes sense for search, and can't cause an incorrect 
+ * transposition table entry to be read.  It's also exceedingly unlikely 
+ * for it to cause 3-fold to be detected incorrectly, so it's worth the "risk" 
+ * in search (and the actual game loop can simply do the more expensive 
+ * legality check and add a bit to the hash).
  */
 void hash_make_move(
   const move_t *move,

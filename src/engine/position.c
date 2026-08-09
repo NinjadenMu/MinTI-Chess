@@ -8,9 +8,11 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "attack.h"
 #include "../ce/memory_map.h"
 #include "../config.h"
 #include "evaluation.h"
+#include "hash.h"
 #include "position.h"
 #include "types.h"
 
@@ -32,6 +34,7 @@ void position_clear(void)
   POSITION_HALFMOVE = 0;
 
   evaluation_clear();
+  hash_clear();
 }
 
 uint8_t position_add_piece(uint8_t square, uint8_t piece)
@@ -70,6 +73,7 @@ uint8_t position_add_piece(uint8_t square, uint8_t piece)
   }
 
   evaluation_add_piece(piece, square);
+  hash_add_piece(piece, square);
 
   return 0;
 }
@@ -86,6 +90,7 @@ uint8_t position_remove_piece(uint8_t square)
   }
 
   evaluation_remove_piece(piece, square);
+  hash_remove_piece(piece, square);
 
   uint8_t color_index = COLOR_INDEX(PIECE_COLOR(piece));
   uint8_t list_index = PIECE_INDEX[square];
@@ -119,6 +124,7 @@ uint8_t position_move_piece(uint8_t from, uint8_t to)
   }
 
   evaluation_move_piece(piece, from, to);
+  hash_move_piece(piece, from, to);
 
   uint8_t color_index = COLOR_INDEX(PIECE_COLOR(piece));
   uint8_t list_index = PIECE_INDEX[from];
@@ -186,6 +192,8 @@ uint8_t position_set_start(void)
   POSITION_EP_SQUARE = SQUARE_NONE;
   POSITION_HALFMOVE = 0;
 
+  hash_rebuild();
+
   return 0;
 }
 
@@ -215,6 +223,117 @@ static uint8_t fen_piece_code(char character)
  }
 
   return color | type;
+}
+
+static uint8_t ep_capture_is_legal(
+  uint8_t from,
+  uint8_t ep_square,
+  uint8_t captured_square,
+  uint8_t side
+)
+{
+  uint8_t *const board = BOARD;
+  uint8_t pawn = side | PIECE_PAWN;
+
+  if (
+    SQUARE_OFFBOARD(from) ||
+    board[from] != pawn
+  ) {
+    return 0;
+  }
+
+  uint8_t captured = board[captured_square];
+  uint8_t king_square =
+    POSITION_KING_SQUARE[COLOR_INDEX(side)];
+
+  board[from] = PIECE_EMPTY;
+  board[captured_square] = PIECE_EMPTY;
+  board[ep_square] = pawn;
+
+  uint8_t legal = !square_is_attacked(
+    king_square,
+    OPPOSITE_COLOR(side)
+  );
+
+  board[ep_square] = PIECE_EMPTY;
+  board[captured_square] = captured;
+  board[from] = pawn;
+
+  return legal;
+}
+
+static uint8_t legal_ep_square(
+  uint8_t ep_square,
+  uint8_t side
+)
+{
+  if (
+    ep_square == SQUARE_NONE ||
+    BOARD[ep_square] != PIECE_EMPTY
+  ) {
+    return SQUARE_NONE;
+  }
+
+  uint8_t captured_square;
+
+  if (side == COLOR_WHITE) {
+    if (SQUARE_RANK(ep_square) != 5) {
+      return SQUARE_NONE;
+    }
+
+    captured_square = ep_square - 16;
+
+    if (BOARD[captured_square] != BLACK_PAWN) {
+      return SQUARE_NONE;
+    }
+
+    if (
+      ep_capture_is_legal(
+        ep_square - 15,
+        ep_square,
+        captured_square,
+        side
+      ) ||
+      ep_capture_is_legal(
+        ep_square - 17,
+        ep_square,
+        captured_square,
+        side
+      )
+    ) {
+      return ep_square;
+    }
+  }
+  else {
+    if (SQUARE_RANK(ep_square) != 2) {
+      return SQUARE_NONE;
+    }
+
+    captured_square = ep_square + 16;
+
+    if (BOARD[captured_square] != WHITE_PAWN) {
+      return SQUARE_NONE;
+    }
+
+    if (
+      ep_capture_is_legal(
+        ep_square + 15,
+        ep_square,
+        captured_square,
+        side
+      ) ||
+      ep_capture_is_legal(
+        ep_square + 17,
+        ep_square,
+        captured_square,
+        side
+      )
+    ) {
+      return ep_square;
+    }
+  }
+
+  return SQUARE_NONE;
 }
 
 uint8_t position_from_fen(const char *fen)
@@ -382,6 +501,13 @@ uint8_t position_from_fen(const char *fen)
   if (!position_is_consistent()) {
     goto fail;
   }
+
+  POSITION_EP_SQUARE = legal_ep_square(
+    POSITION_EP_SQUARE,
+    POSITION_SIDE
+  );
+
+  hash_rebuild();
 
   return 0;
 

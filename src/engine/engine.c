@@ -76,6 +76,7 @@ static void init_delta_tables(void) {
 
 uint8_t engine_init(void) {
   evaluation_init();
+  hash_init();
   init_delta_tables();
 
   memset(move_list_base, 0, sizeof(move_list_base));
