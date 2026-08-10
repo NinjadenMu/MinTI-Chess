@@ -71,6 +71,9 @@
 #define CE_ADDR_PST_KING_OPENING         0xD53B00u
 #define CE_ADDR_PST_KING_ENDGAME         0xD53C00u
 
+#define CE_ADDR_TRANSPOSITION_TABLE       0xD54000u
+#define CE_SIZE_TRANSPOSITION_TABLE       0x010000u
+
 #define BOARD \
   ((uint8_t *)CE_ADDR_BOARD)
 
