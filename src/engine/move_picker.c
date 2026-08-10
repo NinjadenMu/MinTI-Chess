@@ -17,6 +17,17 @@ enum {
   PICKER_STAGE_OVERFLOW
 };
 
+static inline uint8_t moves_are_same(
+  const move_t *first,
+  const move_t *second
+)
+{
+  return
+    first->from == second->from &&
+    first->to == second->to &&
+    first->flags == second->flags;
+}
+
 static move_t *move_picker_pick(move_picker_t *picker)
 {
   return &picker->moves[picker->index++];
@@ -54,43 +65,56 @@ uint8_t move_picker_next(
     return MOVE_PICKER_MOVE;
   }
 
-  while (picker->index == picker->count) {
-    uint8_t generation_stage;
+  while (1) {
+    while (picker->index == picker->count) {
+      uint8_t generation_stage;
 
-    switch (picker->stage) {
-      case PICKER_STAGE_CAPTURES:
-        generation_stage = GEN_CAPTURES;
-        picker->stage = PICKER_STAGE_QUIETS;
-        break;
+      switch (picker->stage) {
+        case PICKER_STAGE_CAPTURES:
+          generation_stage = GEN_CAPTURES;
+          picker->stage = PICKER_STAGE_QUIETS;
+          break;
 
-      case PICKER_STAGE_QUIETS:
-        generation_stage = GEN_QUIETS;
-        picker->stage = PICKER_STAGE_DONE;
-        break;
+        case PICKER_STAGE_QUIETS:
+          generation_stage = GEN_QUIETS;
+          picker->stage = PICKER_STAGE_DONE;
+          break;
 
-      case PICKER_STAGE_DONE:
-        return MOVE_PICKER_DONE;
+        case PICKER_STAGE_DONE:
+          return MOVE_PICKER_DONE;
 
-      default:
+        default:
+          return MOVE_PICKER_OVERFLOW;
+      }
+
+      picker->count = movegen_generate(
+        picker->moves,
+        picker->capacity,
+        generation_stage
+      );
+      picker->index = 0;
+
+      if (picker->count == MOVEGEN_OVERFLOW) {
+        picker->count = 0;
+        picker->stage = PICKER_STAGE_OVERFLOW;
+
         return MOVE_PICKER_OVERFLOW;
+      }
     }
 
-    picker->count = movegen_generate(
-      picker->moves,
-      picker->capacity,
-      generation_stage
-    );
-    picker->index = 0;
+    move_t *candidate = move_picker_pick(picker);
 
-    if (picker->count == MOVEGEN_OVERFLOW) {
-      picker->count = 0;
-      picker->stage = PICKER_STAGE_OVERFLOW;
-      return MOVE_PICKER_OVERFLOW;
+    if (
+      picker->has_preferred &&
+      moves_are_same(candidate, &picker->preferred)
+    ) {
+      picker->has_preferred = 0;
+      continue;
     }
+
+    *move = candidate;
+    return MOVE_PICKER_MOVE;
   }
-
-  *move = move_picker_pick(picker);
-  return MOVE_PICKER_MOVE;
 }
 
 move_t *move_picker_end(const move_picker_t *picker)
