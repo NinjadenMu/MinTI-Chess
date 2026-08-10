@@ -26,7 +26,7 @@ void move_picker_init(
   move_picker_t *picker,
   move_t *moves,
   uint8_t capacity,
-  const move_t preferred,
+  const move_t *preferred,
   const uint8_t has_preferred
 )
 {
@@ -38,7 +38,7 @@ void move_picker_init(
   picker->has_preferred = has_preferred;
   picker->preferred_pending = has_preferred;
   if (has_preferred) {
-    picker->preferred = preferred;
+    picker->preferred = *preferred;
   }
 }
 

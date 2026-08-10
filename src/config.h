@@ -12,7 +12,7 @@
  * Used to size global arrays containing search state, which can't fit in 
  * 4 KiB stack.
  */
-#define MAX_PLY 40
+#define MAX_PLY 32
 
 /*
  * Size of shared arena for active move lists
