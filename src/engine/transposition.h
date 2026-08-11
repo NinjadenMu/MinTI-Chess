@@ -36,7 +36,7 @@ void tt_clear(void);
 /**
  * @brief Probes table for current position
  * 
- * `result` score is ply-adjusted.
+ * `result->score` is ply-adjusted.
  */
 void tt_probe(
   uint8_t ply,

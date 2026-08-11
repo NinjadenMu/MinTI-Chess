@@ -125,7 +125,7 @@ static void store_move(
 {
   uint8_t code;
 
-  if (!has_move || move == 0) {
+  if (!has_move) {
     code = TT_MOVE_NONE;
     entry->from_code = (code & 0x01) << 3;
     entry->to_code = (code & 0x04) << 1;
@@ -155,24 +155,184 @@ static uint8_t stored_move_code(
     ((entry->to_code >> 1) & 0x04);
 }
 
-static uint8_t load_move(
+static uint8_t stored_move_is_sane(
   const tt_entry_t *entry,
-  move_t *move
+  uint8_t code
 )
 {
-  uint8_t code = stored_move_code(entry);
-
-  if (code == TT_MOVE_NONE) {
-    return 0;
-  }
-
   uint8_t from = entry->from_code & 0x77;
   uint8_t to = entry->to_code & 0x77;
   uint8_t side = POSITION_SIDE;
   uint8_t piece = BOARD[from];
   uint8_t target = BOARD[to];
 
+  if (!piece_is_friendly(piece, side)) {
+    return 0;
+  }
+
+  if (
+    target != PIECE_EMPTY &&
+    PIECE_COLOR(target) == side
+  ) {
+    return 0;
+  }
+
   uint8_t piece_type = PIECE_TYPE(piece);
+
+  if (
+    code != TT_MOVE_NORMAL &&
+    piece_type != PIECE_PAWN
+  ) {
+    return 0;
+  }
+
+  uint8_t delta_attackers =
+    DELTA_ATTACKERS[DELTA_TABLE_INDEX(to - from)];
+
+  switch (piece_type) {
+    case PIECE_PAWN:
+      {
+        uint8_t promotion_rank =
+          side == COLOR_WHITE ? 7 : 0;
+        uint8_t promotes =
+          code != TT_MOVE_NORMAL;
+
+        if (
+          promotes !=
+          (SQUARE_RANK(to) == promotion_rank)
+        ) {
+          return 0;
+        }
+
+        uint8_t pawn_attacker =
+          side == COLOR_WHITE
+            ? ATK_WPAWN
+            : ATK_BPAWN;
+
+        if (delta_attackers & pawn_attacker) {
+          if (target != PIECE_EMPTY) {
+            return 1;
+          }
+
+          uint8_t captured_square =
+            side == COLOR_WHITE
+              ? to - 16
+              : to + 16;
+
+          return
+            to == POSITION_EP_SQUARE &&
+            BOARD[captured_square] ==
+              (OPPOSITE_COLOR(side) | PIECE_PAWN);
+        }
+
+        if (target != PIECE_EMPTY) {
+          return 0;
+        }
+
+        if (side == COLOR_WHITE) {
+          return
+            to == from + 16 ||
+            (
+              SQUARE_RANK(from) == 1 &&
+              to == from + 32 &&
+              BOARD[from + 16] == PIECE_EMPTY
+            );
+        }
+
+        return
+          from == to + 16 ||
+          (
+            SQUARE_RANK(from) == 6 &&
+            from == to + 32 &&
+            BOARD[from - 16] == PIECE_EMPTY
+          );
+      }
+
+    case PIECE_KNIGHT:
+      return
+        (delta_attackers & ATK_KNIGHT) != 0;
+
+    case PIECE_KING:
+      if (delta_attackers & ATK_KING) {
+        return 1;
+      }
+
+      if (target != PIECE_EMPTY) {
+        return 0;
+      }
+
+      if (
+        side == COLOR_WHITE &&
+        from == SQUARE(4, 0)
+      ) {
+        if (to == SQUARE(6, 0)) {
+          return
+            (POSITION_CASTLING & CASTLE_WHITE_KING) &&
+            BOARD[SQUARE(5, 0)] == PIECE_EMPTY &&
+            BOARD[SQUARE(7, 0)] == WHITE_ROOK;
+        }
+
+        if (to == SQUARE(2, 0)) {
+          return
+            (POSITION_CASTLING & CASTLE_WHITE_QUEEN) &&
+            BOARD[SQUARE(3, 0)] == PIECE_EMPTY &&
+            BOARD[SQUARE(1, 0)] == PIECE_EMPTY &&
+            BOARD[SQUARE(0, 0)] == WHITE_ROOK;
+        }
+
+        return 0;
+      }
+
+      if (
+        side == COLOR_BLACK &&
+        from == SQUARE(4, 7)
+      ) {
+        if (to == SQUARE(6, 7)) {
+          return
+            (POSITION_CASTLING & CASTLE_BLACK_KING) &&
+            BOARD[SQUARE(5, 7)] == PIECE_EMPTY &&
+            BOARD[SQUARE(7, 7)] == BLACK_ROOK;
+        }
+
+        if (to == SQUARE(2, 7)) {
+          return
+            (POSITION_CASTLING & CASTLE_BLACK_QUEEN) &&
+            BOARD[SQUARE(3, 7)] == PIECE_EMPTY &&
+            BOARD[SQUARE(1, 7)] == PIECE_EMPTY &&
+            BOARD[SQUARE(0, 7)] == BLACK_ROOK;
+        }
+      }
+
+      return 0;
+
+    case PIECE_BISHOP:
+      return
+        (delta_attackers & ATK_DIAG) != 0;
+
+    case PIECE_ROOK:
+      return
+        (delta_attackers & ATK_ORTH) != 0;
+
+    case PIECE_QUEEN:
+      return
+        (delta_attackers & (ATK_DIAG | ATK_ORTH)) != 0;
+
+    default:
+      return 0;
+  }
+}
+
+static void load_move(
+  const tt_entry_t *entry,
+  uint8_t code,
+  move_t *move
+)
+{
+  uint8_t from = entry->from_code & 0x77;
+  uint8_t to = entry->to_code & 0x77;
+  uint8_t side = POSITION_SIDE;
+  uint8_t piece_type = PIECE_TYPE(BOARD[from]);
+  uint8_t target = BOARD[to];
   uint8_t flags = MF_QUIET;
 
   if (target != PIECE_EMPTY) {
@@ -180,60 +340,21 @@ static uint8_t load_move(
   }
 
   if (code != TT_MOVE_NORMAL) {
-    if (piece_type != PIECE_PAWN) {
-      return 0;
-    }
-
-    if (
-      (side == COLOR_WHITE && SQUARE_RANK(to) != 7) ||
-      (side == COLOR_BLACK && SQUARE_RANK(to) != 0)
-    ) {
-      return 0;
-    }
-
-    flags |= MF_PROMO;
-
-    switch (code) {
-      case TT_MOVE_PROMO_QUEEN:
-        flags |= MF_PROMO_QUEEN;
-        break;
-
-      case TT_MOVE_PROMO_ROOK:
-        flags |= MF_PROMO_ROOK;
-        break;
-
-      case TT_MOVE_PROMO_BISHOP:
-        flags |= MF_PROMO_BISHOP;
-        break;
-
-      case TT_MOVE_PROMO_KNIGHT:
-        flags |= MF_PROMO_KNIGHT;
-        break;
-
-      default:
-        return 0;
-    }
+    flags |=
+      MF_PROMO |
+      ((code - TT_MOVE_PROMO_QUEEN) << 5);
   }
   else if (piece_type == PIECE_PAWN) {
     if (
-      (side == COLOR_WHITE && SQUARE_RANK(to) == 7) ||
-      (side == COLOR_BLACK && SQUARE_RANK(to) == 0)
-    ) {
-      return 0;
-    }
-
-    if (
       target == PIECE_EMPTY &&
-      to == POSITION_EP_SQUARE
-    ) {
-      uint8_t is_ep =
+      to == POSITION_EP_SQUARE &&
+      (
         side == COLOR_WHITE
           ? to == from + 15 || to == from + 17
-          : from == to + 15 || from == to + 17;
-
-      if (is_ep) {
-        flags |= MF_CAPTURE | MF_EP;
-      }
+          : from == to + 15 || from == to + 17
+      )
+    ) {
+      flags |= MF_CAPTURE | MF_EP;
     }
 
     if (
@@ -254,8 +375,6 @@ static uint8_t load_move(
   move->to = to;
   move->flags = flags;
   move->score = 0;
-
-  return 1;
 }
 
 static uint8_t entry_depth(const tt_entry_t *entry)
@@ -328,12 +447,21 @@ void tt_probe(
     return;
   }
 
+  uint8_t code = stored_move_code(entry);
+  uint8_t has_move = code != TT_MOVE_NONE;
+  if (has_move) {
+    if (!stored_move_is_sane(entry, code)) {
+      return;
+    }
+
+    load_move(entry, code, &result->move);
+  }
+
+  
   result->score = load_score(entry, ply);
   result->depth = entry_depth(entry);
   result->bound = bound;
-  result->has_move =
-    load_move(entry, &result->move);
-
+  result->has_move = has_move;
   result->hit = 1;
 }
 
@@ -348,7 +476,14 @@ void tt_store(
 {
   tt_entry_t *entry = current_entry();
 
-  if (!should_replace(entry, depth, bound)) {
+  if (
+    stored_move_code(entry) != TT_MOVE_NONE && 
+    !should_replace(entry, depth, bound)
+  ) {
+    /*
+     * Entries with TT_MOVE_NONE should always be replaced because terminal 
+     * nodes are cheap to search anyways
+     */
     return;
   }
 
