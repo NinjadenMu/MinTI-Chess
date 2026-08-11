@@ -16,6 +16,7 @@
 #include "repetition.h"
 #include "search.h"
 #include "storage.h"
+#include "transposition.h"
 #include "types.h"
 
 #define PV_TABLE_SIZE \
@@ -28,6 +29,7 @@ static move_t previous_pv[MAX_PLY];
 static uint8_t previous_pv_length;
 
 static uint24_t search_nodes;
+static uint24_t transposition_hits;
 static uint8_t search_status;
 
 static inline uint8_t moves_are_same(
@@ -92,6 +94,48 @@ static eval_t pvs(
     return evaluate_position();
   }
 
+  eval_t original_alpha = alpha;
+  uint8_t pv_node = beta - alpha > 1;
+
+  /*
+   * Technically should incorporate threefold, but threefold is very hard to 
+   * check (especially with the current table design), and the advantages 
+   * of a transposition table outweigh edge cases about threefold
+   */
+  uint8_t tt_score_allowed =
+    POSITION_HALFMOVE + depth < 100;
+
+  tt_probe_t tt;
+  tt_probe(ply, &tt);
+
+  if (tt.hit) {
+    ++transposition_hits;
+
+    if (
+      tt_score_allowed &&
+      !pv_node &&
+      tt.depth >= depth
+    ) {
+      if (tt.bound == TT_BOUND_EXACT) {
+        return tt.score;
+      }
+
+      if (
+        tt.bound == TT_BOUND_LOWER &&
+        tt.score >= beta
+      ) {
+        return tt.score;
+      }
+
+      if (
+        tt.bound == TT_BOUND_UPPER &&
+        tt.score <= alpha
+      ) {
+        return tt.score;
+      }
+    }
+  }
+
   king_info_t *king_info = &king_info_stack[ply];
 
   king_scan(POSITION_SIDE, king_info);
@@ -114,6 +158,9 @@ static eval_t pvs(
 
   move_t *child_row =
     pv_row + (MAX_PLY - ply);
+
+  move_t best_move;
+  eval_t best_score = -SEARCH_SCORE_INFINITY;
 
   uint8_t legal_moves = 0;
   uint8_t first_move = 1;
@@ -186,11 +233,17 @@ static eval_t pvs(
 
     first_move = 0;
 
+    if (score > best_score) {
+      best_score = score;
+      best_move = *move;
+    }
+
     if (score <= alpha) {
       continue;
     }
 
     alpha = score;
+
     update_pv(
       ply,
       pv_row,
@@ -208,13 +261,41 @@ static eval_t pvs(
     return SEARCH_SCORE_DRAW;
   }
 
+  eval_t result;
   if (legal_moves == 0) {
-    return king_info->n_checkers != 0
+    result = king_info->n_checkers != 0
       ? -SEARCH_SCORE_MATE + ply
       : SEARCH_SCORE_DRAW;
   }
+  else {
+    result = alpha;
+  }
 
-  return alpha;
+  if (tt_score_allowed) {
+    uint8_t bound;
+
+    if (result <= original_alpha) {
+      bound = TT_BOUND_UPPER;
+    }
+    else if (result >= beta) {
+      bound = TT_BOUND_LOWER;
+    }
+    else {
+      bound = TT_BOUND_EXACT;
+    }
+
+    uint8_t has_best_move = legal_moves > 0 ? 1 : 0;
+    tt_store(
+      depth,
+      ply,
+      result,
+      bound,
+      has_best_move ? &best_move : 0,
+      has_best_move
+    );
+  }
+
+  return result;
 }
 
 static void save_completed_pv(void)
@@ -235,7 +316,10 @@ uint8_t search_position(
   search_result_t *result
 )
 {
+  tt_clear();
+  
   search_nodes = 0;
+  transposition_hits = 0;
   search_status = 0;
   previous_pv_length = 0;
   move_list_base[0] = move_arena;
@@ -285,6 +369,7 @@ uint8_t search_position(
   }
 
   result->nodes = search_nodes;
+  result->transposition_hits = transposition_hits;
 
   return search_status;
 }

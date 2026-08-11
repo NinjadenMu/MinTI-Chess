@@ -21,6 +21,7 @@ enum {
 typedef struct {
   eval_t score;
   uint24_t nodes;
+  uint24_t transposition_hits;
   move_t best_move;
   uint8_t depth;
   uint8_t pv_length;
