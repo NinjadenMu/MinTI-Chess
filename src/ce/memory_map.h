@@ -74,6 +74,9 @@
 #define CE_ADDR_TRANSPOSITION_TABLE       0xD54000u
 #define CE_SIZE_TRANSPOSITION_TABLE       0x010000u
 
+#define CE_ADDR_HISTORY                   0xD64000u
+#define CE_SIZE_HISTORY                   0x001000u
+
 #define BOARD \
   ((uint8_t *)CE_ADDR_BOARD)
 
@@ -150,5 +153,8 @@
 
 #define EVAL_PST_KING_ENDGAME \
   ((uint8_t *)CE_ADDR_PST_KING_ENDGAME)
+
+#define HISTORY \
+  ((uint8_t (*)[256])CE_ADDR_HISTORY)
 
 #endif

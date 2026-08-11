@@ -11,6 +11,8 @@
 #include "movegen.h"
 #include "types.h"
 
+#define PICKER_HISTORY_MOVE_COUNT 6
+
 enum {
   PICKER_STAGE_CAPTURES,
   PICKER_STAGE_KILLER_1,
@@ -66,7 +68,7 @@ static inline uint8_t ray_is_clear(
   return 1;
 }
 
-uint8_t killer_is_pseudolegal(const move_t *move)
+static uint8_t killer_is_pseudolegal(const move_t *move)
 {
   uint8_t *const board = BOARD;
   uint8_t from = move->from;
@@ -254,12 +256,34 @@ static void score_captures(
   }
 }
 
+static void score_quiets(
+  move_t *moves,
+  uint8_t count
+)
+{
+  uint8_t *const board = BOARD;
+  move_t *end = moves + count;
+
+  while (moves != end) {
+    moves->score =
+      HISTORY[board[moves->from]][moves->to];
+
+    ++moves;
+  }
+}
+
 static move_t *move_picker_pick(move_picker_t *picker)
 {
   move_t *picked =
     &picker->moves[picker->index++];
 
-  if (picker->stage != PICKER_STAGE_KILLER_1) {
+  if (
+    picker->stage != PICKER_STAGE_KILLER_1 &&
+    (
+      picker->stage != PICKER_STAGE_DONE ||
+      picker->index > PICKER_HISTORY_MOVE_COUNT
+    )
+  ) {
     return picked;
   }
 
@@ -490,6 +514,12 @@ uint8_t move_picker_next(
 
       if (generation_stage == GEN_CAPTURES) {
         score_captures(
+          picker->moves,
+          picker->count
+        );
+      }
+      else {
+        score_quiets(
           picker->moves,
           picker->count
         );

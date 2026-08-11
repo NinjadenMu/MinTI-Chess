@@ -4,7 +4,9 @@
  * The brain! (implementation of search.h)
  */
 
+#include "debug.h"
 #include <stdint.h>
+#include <string.h>
 
 #include "../ce/memory_map.h"
 #include "../config.h"
@@ -45,7 +47,8 @@ static inline uint8_t moves_are_same(
     first->flags == second->flags;
 }
 
-static void store_killer(
+static void update_quiet_heuristics(
+  uint8_t depth,
   uint8_t ply,
   const move_t *move
 )
@@ -53,6 +56,16 @@ static void store_killer(
   if (move->flags & (MF_CAPTURE | MF_PROMO)) {
     return;
   }
+
+  uint8_t piece = BOARD[move->from];
+  uint8_t *history =
+    &HISTORY[piece][move->to];
+  uint8_t previous = *history;
+  uint8_t updated = previous + depth;
+
+  *history = updated < previous
+    ? 0xff
+    : updated;
 
   move_t *killers = killer_moves[ply];
 
@@ -285,7 +298,11 @@ static eval_t pvs(
     );
 
     if (alpha >= beta) {
-      store_killer(ply, move);
+      update_quiet_heuristics(
+        depth,
+        ply,
+        move
+      );
       break;
     }
   }
@@ -345,12 +362,24 @@ static void save_completed_pv(void)
   }
 }
 
+static void age_history(void)
+{
+  uint8_t *value = HISTORY[0];
+  uint8_t *end = value + CE_SIZE_HISTORY;
+
+  while (value != end) {
+    *value >>= 1;
+    ++value;
+  }
+}
+
 uint8_t search_position(
   uint8_t max_depth,
   search_result_t *result
 )
 {
   tt_clear();
+  memset(HISTORY, 0, CE_SIZE_HISTORY);
 
   for (uint8_t ply = 0; ply < MAX_PLY; ++ply) {
     killer_moves[ply][0].from = SQUARE_NONE;
@@ -382,6 +411,8 @@ uint8_t search_position(
     depth <= max_depth;
     ++depth
   ) {
+    age_history();
+
     eval_t score = pvs(
       depth,
       0,
