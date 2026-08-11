@@ -28,6 +28,8 @@ static uint8_t pv_length[MAX_PLY + 1];
 static move_t previous_pv[MAX_PLY];
 static uint8_t previous_pv_length;
 
+static move_t killer_moves[MAX_PLY][2];
+
 static uint24_t search_nodes;
 static uint24_t transposition_hits;
 static uint8_t search_status;
@@ -41,6 +43,27 @@ static inline uint8_t moves_are_same(
     first->from == second->from &&
     first->to == second->to &&
     first->flags == second->flags;
+}
+
+static void store_killer(
+  uint8_t ply,
+  const move_t *move
+)
+{
+  if (move->flags & (MF_CAPTURE | MF_PROMO)) {
+    return;
+  }
+
+  move_t *killers = killer_moves[ply];
+
+  if (moves_are_same(move, &killers[0])) {
+    return;
+  }
+
+  move_t replacement = *move;
+
+  killers[1] = killers[0];
+  killers[0] = replacement;
 }
 
 static uint8_t available_move_capacity(move_t *base)
@@ -159,6 +182,7 @@ static eval_t pvs(
     &picker,
     move_base,
     available_move_capacity(move_base),
+    killer_moves[ply],
     pv_move,
     has_pv_move,
     tt_move,
@@ -261,6 +285,7 @@ static eval_t pvs(
     );
 
     if (alpha >= beta) {
+      store_killer(ply, move);
       break;
     }
   }
@@ -326,6 +351,11 @@ uint8_t search_position(
 )
 {
   tt_clear();
+
+  for (uint8_t ply = 0; ply < MAX_PLY; ++ply) {
+    killer_moves[ply][0].from = SQUARE_NONE;
+    killer_moves[ply][1].from = SQUARE_NONE;
+  }
   
   search_nodes = 0;
   transposition_hits = 0;

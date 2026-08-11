@@ -19,13 +19,14 @@ enum {
 
 typedef struct {
   move_t *moves;
+  move_t *killers;
   move_t pv_move;
   move_t tt_move;
   uint8_t capacity;
   uint8_t count;
   uint8_t index;
   uint8_t stage;
-  // bits are flags for has_pv, has_tt, pv_pending, tt_pending
+  // bits are flags for priority moves
   uint8_t priority;
 } move_picker_t;
 
@@ -35,6 +36,7 @@ typedef struct {
  * @param[out] picker - picker object to initialize
  * @param[in] moves - buffer for current stage's generated moves
  * @param[in] capacity - number of moves available in buffer
+ * @param[in] killers - address of two killer move slots
  * @param[in] pv_move - address of principal variation move
  * @param[in] has_pv_move - pv_move is used if 1, else ignored
  * @param[in] tt_move - address of transposition table move
@@ -44,6 +46,7 @@ void move_picker_init(
   move_picker_t *picker,
   move_t *moves,
   uint8_t capacity,
+  move_t *killers,
   const move_t *pv_move,
   uint8_t has_pv_move,
   const move_t *tt_move,

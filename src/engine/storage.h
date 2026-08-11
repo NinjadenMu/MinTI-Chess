@@ -1,7 +1,7 @@
 /**
  * @file storage.h
  * 
- * Search state buffer allocation in .bss
+ * Shared ply-indexed buffer allocation in .bss
  */
 
 #ifndef MINTI_ENGINE_STORAGE_H

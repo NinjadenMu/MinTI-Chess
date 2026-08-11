@@ -1,7 +1,7 @@
 /**
  * @file memory_map.h
  * 
- * Maps regions of memory for MinTI, defines object locations
+ * Maps VRAM addresses to MinTI objects
  * 
  * The TI-84 Plus CE is physically addressed.
  * 
