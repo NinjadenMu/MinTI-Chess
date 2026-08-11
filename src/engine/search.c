@@ -140,10 +140,17 @@ static eval_t pvs(
 
   king_scan(POSITION_SIDE, king_info);
 
-  uint8_t has_preferred = 
+  uint8_t has_pv_move =
     follows_previous_pv &&
     ply < previous_pv_length;
-  const move_t *preferred = has_preferred ? &previous_pv[ply] : 0;
+  const move_t *pv_move =
+    has_pv_move ? &previous_pv[ply] : 0;
+
+  uint8_t has_tt_move =
+    tt.hit &&
+    tt.has_move;
+  const move_t *tt_move =
+    has_tt_move ? &tt.move : 0;
 
   move_picker_t picker;
   move_t *move_base = move_list_base[ply];
@@ -152,8 +159,10 @@ static eval_t pvs(
     &picker,
     move_base,
     available_move_capacity(move_base),
-    preferred,
-    has_preferred
+    pv_move,
+    has_pv_move,
+    tt_move,
+    has_tt_move
   );
 
   move_t *child_row =
@@ -178,8 +187,8 @@ static eval_t pvs(
     ++legal_moves;
 
     uint8_t child_follows_previous_pv =
-      has_preferred &&
-      moves_are_same(move, preferred);
+      has_pv_move &&
+      moves_are_same(move, pv_move);
 
     move_list_base[ply + 1] =
       move_picker_end(&picker);
