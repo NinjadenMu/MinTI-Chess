@@ -48,7 +48,7 @@ int main(void)
 
     position_from_fen("r2q1rk1/pbn1bpp1/1p3n1p/3p4/3P3B/2NBPN2/PP3PPP/R2Q1RK1 w - - 0 11");
     search_result_t result;
-    search_position(5, &result);
+    search_position(4, &result);
 
     gfx_SetTextXY(8, 32);
     gfx_PrintUInt(result.best_move.from, 3);

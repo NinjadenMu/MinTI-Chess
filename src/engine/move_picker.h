@@ -54,6 +54,23 @@ void move_picker_init(
 );
 
 /**
+ * @brief Initializes a picker which returns only captures and promotions
+ *
+ * @param[out] picker - picker object to initialize
+ * @param[in] moves - buffer for generated moves
+ * @param[in] capacity - number of moves available in buffer
+ * @param[in] pv_move - address of principal variation move
+ * @param[in] has_pv_move - pv_move is used if 1, else ignored
+ */
+void move_picker_init_tactical(
+  move_picker_t *picker,
+  move_t *moves,
+  uint8_t capacity,
+  const move_t *pv_move,
+  uint8_t has_pv_move
+);
+
+/**
  * @brief Returns next pseudo-legal move
  * 
  * @param[in] picker - picker object

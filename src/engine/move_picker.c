@@ -29,7 +29,8 @@ enum {
   PICKER_HAS_KILLER_1 = 0x04,
   PICKER_HAS_KILLER_2 = 0x08,
   PICKER_PV_PENDING = 0x10,
-  PICKER_TT_PENDING = 0x20
+  PICKER_TT_PENDING = 0x20,
+  PICKER_TACTICAL_ONLY = 0x40
 };
 
 static const uint8_t mvv_lva_rank[7] = {
@@ -401,6 +402,30 @@ void move_picker_init(
   }
 }
 
+void move_picker_init_tactical(
+  move_picker_t *picker,
+  move_t *moves,
+  uint8_t capacity,
+  const move_t *pv_move,
+  const uint8_t has_pv_move
+)
+{
+  picker->moves = moves;
+  picker->killers = 0;
+  picker->capacity = capacity;
+  picker->count = 0;
+  picker->index = 0;
+  picker->stage = PICKER_STAGE_CAPTURES;
+  picker->priority = PICKER_TACTICAL_ONLY;
+
+  if (has_pv_move) {
+    picker->pv_move = *pv_move;
+    picker->priority |=
+      PICKER_HAS_PV |
+      PICKER_PV_PENDING;
+  }
+}
+
 uint8_t move_picker_next(
   move_picker_t *picker,
   move_t **move
@@ -431,6 +456,11 @@ uint8_t move_picker_next(
           break;
 
         case PICKER_STAGE_KILLER_1:
+          if (picker->priority & PICKER_TACTICAL_ONLY) {
+            picker->stage = PICKER_STAGE_DONE;
+            continue;
+          }
+
           {
             move_t *killer = &picker->killers[0];
 
