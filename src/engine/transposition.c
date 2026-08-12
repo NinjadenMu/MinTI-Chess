@@ -44,10 +44,12 @@ typedef struct {
   uint8_t meta; // encoded Udddddbb
   int16_t score;
 } tt_entry_t;
+#ifndef MINTI_HOST
 _Static_assert(
   sizeof(tt_entry_t) == 8,
   "transposition table entry should be 8 bytes"
 );
+#endif
 
 #define TT_TABLE \
   ((tt_entry_t *)CE_ADDR_TRANSPOSITION_TABLE)

@@ -55,6 +55,7 @@
 #define CE_ADDR_PAWN_FILE_COUNT          0xD53140u
 #define CE_ADDR_BISHOP_COUNT             0xD53150u
 #define CE_ADDR_ROOK_FILE_COUNT          0xD53152u
+
 #define CE_ADDR_HASH_KEY                 0xD53162u
 
 #define CE_ADDR_PIECE_INDEX              0xD53200u

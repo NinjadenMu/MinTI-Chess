@@ -19,4 +19,7 @@
  */
 #define MOVE_ARENA_CAPACITY 1024
 
+/* Fixed search depth used by the calculator game loop. */
+#define GAME_SEARCH_DEPTH 4
+
 #endif
