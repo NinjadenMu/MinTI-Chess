@@ -29,6 +29,8 @@
 // once quiescence reaches this, it will stop as soon as it's not in check
 #define QUIESCENCE_SOFT_MAX_DEPTH 8
 
+#define ASPIRATION_WINDOW 50
+
 static const uint16_t delta_piece_values[7] = {
   0, 100, 320, 0, 330, 500, 950
 };
@@ -623,17 +625,39 @@ uint8_t search_position(
   ) {
     age_history();
 
+    eval_t alpha = -SEARCH_SCORE_INFINITY;
+    eval_t beta = SEARCH_SCORE_INFINITY;
+    if (depth > 2) {
+      alpha = result->score - ASPIRATION_WINDOW;
+      beta = result->score + ASPIRATION_WINDOW;
+    }
+
     eval_t score = pvs(
       depth,
       0,
-      -SEARCH_SCORE_INFINITY,
-      SEARCH_SCORE_INFINITY,
+      alpha,
+      beta,
       pv_table,
       previous_pv_length != 0
     );
 
     if (search_status != 0) {
       break;
+    }
+
+    if (
+      depth > 2 &&
+      (score <= alpha || score >= beta)
+    ) {
+      // retry if aspiration window failed
+      score = pvs(
+        depth,
+        0,
+        -SEARCH_SCORE_INFINITY,
+        SEARCH_SCORE_INFINITY,
+        pv_table,
+        previous_pv_length != 0
+      );
     }
 
     save_completed_pv();
