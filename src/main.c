@@ -46,7 +46,7 @@ int main(void)
     dbg_printf("MinTI Chess initialized.\n");
     gfx_PrintStringXY("MinTI Chess initialized.", 8, 8);
 
-    position_from_fen("3rr3/2pq2pk/p2p1pnp/8/2QBPP2/1P6/P5PP/4RRK1 b - - 0 1");
+    position_from_fen("r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3");
     search_result_t result;
     search_position(4, &result);
 

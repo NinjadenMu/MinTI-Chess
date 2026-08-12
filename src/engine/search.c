@@ -413,6 +413,11 @@ static eval_t pvs(
 
       make_null_move(&undo_stack[ply]);
 
+      // this silliness with the casting is due to what I believe to be a 
+      // miscompile related to 24-bit integers.
+      // Issue filed here:
+      // https://github.com/CE-Programming/llvm-project/issues/52
+      // Will revisit.
       eval_t null_alpha = -beta;
       eval_t null_beta = (int16_t)null_alpha + 1;
 
