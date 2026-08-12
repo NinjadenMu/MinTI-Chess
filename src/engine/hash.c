@@ -300,6 +300,26 @@ void hash_make_move(
   hash_restore(&key);
 }
 
+void hash_make_null_move(void)
+{
+  hash_key_t *key = HASH_ADDR;
+  uint8_t ep_square = POSITION_EP_SQUARE;
+
+  if (ep_square != SQUARE_NONE) {
+    key_subtract(
+      key,
+      &ep_file_random[SQUARE_FILE(ep_square)].key
+    );
+  }
+
+  if (POSITION_SIDE == COLOR_WHITE) {
+    key_add(key, &side_random.key);
+  }
+  else {
+    key_subtract(key, &side_random.key);
+  }
+}
+
 void hash_restore(const hash_key_t *key)
 {
   hash_key_t *current = HASH_ADDR;

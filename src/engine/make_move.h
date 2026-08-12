@@ -39,4 +39,14 @@ void make_move(const move_t *move, undo_t *undo);
  */
 void unmake_move(const move_t *move, const undo_t *undo);
 
+/**
+ * @brief Applies a null move for search
+ */
+void make_null_move(undo_t *undo);
+
+/**
+ * @brief Restores the position from before a null move
+ */
+void unmake_null_move(const undo_t *undo);
+
 #endif

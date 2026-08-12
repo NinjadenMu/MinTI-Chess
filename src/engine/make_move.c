@@ -259,3 +259,22 @@ void unmake_move(const move_t *move, const undo_t *undo)
   POSITION_HALFMOVE = undo->halfmove;
   POSITION_SIDE = side;
 }
+
+void make_null_move(undo_t *undo)
+{
+  undo->hash.part[0] = HASH.part[0];
+  undo->hash.part[1] = HASH.part[1];
+  undo->ep_square = POSITION_EP_SQUARE;
+
+  hash_make_null_move();
+
+  POSITION_EP_SQUARE = SQUARE_NONE;
+  POSITION_SIDE = OPPOSITE_COLOR(POSITION_SIDE);
+}
+
+void unmake_null_move(const undo_t *undo)
+{
+  hash_restore(&undo->hash);
+  POSITION_EP_SQUARE = undo->ep_square;
+  POSITION_SIDE = OPPOSITE_COLOR(POSITION_SIDE);
+}

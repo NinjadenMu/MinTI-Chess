@@ -29,6 +29,8 @@
 // once quiescence reaches this, it will stop as soon as it's not in check
 #define QUIESCENCE_SOFT_MAX_DEPTH 8
 
+#define NULL_MOVE_MIN_DEPTH 3
+#define NULL_MOVE_REDUCTION 2
 #define ASPIRATION_WINDOW 50
 
 static const uint16_t delta_piece_values[7] = {
@@ -314,7 +316,8 @@ static eval_t pvs(
   eval_t alpha,
   eval_t beta,
   move_t *pv_row,
-  uint8_t follows_previous_pv
+  uint8_t follows_previous_pv,
+  uint8_t can_null
 )
 {
   if (depth == 0) {
@@ -385,8 +388,55 @@ static eval_t pvs(
   }
 
   king_info_t *king_info = &king_info_stack[ply];
-
   king_scan(POSITION_SIDE, king_info);
+
+  move_t *move_base = move_list_base[ply];
+  move_t *child_row =
+    pv_row + (MAX_PLY - ply);
+
+  if (
+    can_null &&
+    !pv_node &&
+    depth >= NULL_MOVE_MIN_DEPTH &&
+    king_info->n_checkers == 0 &&
+    beta > -SEARCH_SCORE_MATE + MAX_PLY &&
+    EVAL_NONPAWN_MATERIAL[
+      COLOR_INDEX(POSITION_SIDE)
+    ] != 0
+  ) {
+    eval_t static_score = evaluate_position();
+
+    if (static_score >= beta) {
+      // only try null move if beta cutoff is plausible
+
+      move_list_base[ply + 1] = move_base;
+
+      make_null_move(&undo_stack[ply]);
+
+      eval_t null_alpha = -beta;
+      eval_t null_beta = (int16_t)null_alpha + 1;
+
+      eval_t score = -pvs(
+        depth - NULL_MOVE_REDUCTION - 1,
+        ply + 1,
+        null_alpha,
+        null_beta,
+        child_row,
+        0,
+        0
+      );
+
+      unmake_null_move(&undo_stack[ply]);
+
+      if (search_status != 0) {
+        return SEARCH_SCORE_DRAW;
+      }
+
+      if (score >= beta) {
+        return beta;
+      }
+    }
+  }
 
   uint8_t has_pv_move =
     follows_previous_pv &&
@@ -401,7 +451,6 @@ static eval_t pvs(
     has_tt_move ? &tt.move : 0;
 
   move_picker_t picker;
-  move_t *move_base = move_list_base[ply];
 
   move_picker_init(
     &picker,
@@ -413,9 +462,6 @@ static eval_t pvs(
     tt_move,
     has_tt_move
   );
-
-  move_t *child_row =
-    pv_row + (MAX_PLY - ply);
 
   move_t best_move;
   eval_t best_score = -SEARCH_SCORE_INFINITY;
@@ -453,7 +499,8 @@ static eval_t pvs(
         -beta,
         -alpha,
         child_row,
-        child_follows_previous_pv
+        child_follows_previous_pv,
+        1
       );
     }
     else {
@@ -463,7 +510,8 @@ static eval_t pvs(
         -alpha - 1,
         -alpha,
         child_row,
-        child_follows_previous_pv
+        child_follows_previous_pv,
+        1
       );
 
       if (
@@ -478,7 +526,8 @@ static eval_t pvs(
           -beta,
           -alpha,
           child_row,
-          child_follows_previous_pv
+          child_follows_previous_pv,
+          1
         );
       }
     }
@@ -638,7 +687,8 @@ uint8_t search_position(
       alpha,
       beta,
       pv_table,
-      previous_pv_length != 0
+      previous_pv_length != 0,
+      1
     );
 
     if (search_status != 0) {
@@ -656,7 +706,8 @@ uint8_t search_position(
         -SEARCH_SCORE_INFINITY,
         SEARCH_SCORE_INFINITY,
         pv_table,
-        previous_pv_length != 0
+        previous_pv_length != 0,
+        1
       );
     }
 

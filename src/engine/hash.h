@@ -92,6 +92,14 @@ void hash_make_move(
 );
 
 /**
+ * @brief Updates hash for a null move
+ *
+ * POSITION_SIDE and POSITION_EP_SQUARE must contain their pre-null
+ * values.
+ */
+void hash_make_null_move(void);
+
+/**
  * @brief Restores global hash to `key`
  */
 void hash_restore(const hash_key_t *key);
