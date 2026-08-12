@@ -24,6 +24,15 @@
 #define PV_TABLE_SIZE \
   (MAX_PLY * (MAX_PLY + 1) / 2)
 
+#define QUIESCENCE_DELTA_MARGIN 200
+
+// once quiescence reaches this, it will stop as soon as it's not in check
+#define QUIESCENCE_SOFT_MAX_DEPTH 8
+
+static const uint16_t delta_piece_values[7] = {
+  0, 100, 320, 0, 330, 500, 950
+};
+
 static move_t pv_table[PV_TABLE_SIZE];
 static uint8_t pv_length[MAX_PLY + 1];
 
@@ -89,6 +98,19 @@ static uint8_t available_move_capacity(move_t *base)
     : MOVEGEN_OVERFLOW - 1;
 }
 
+static inline uint16_t delta_capture_value(
+  const move_t *move
+)
+{
+  if (move->flags & MF_EP) {
+    return delta_piece_values[PIECE_PAWN];
+  }
+
+  return delta_piece_values[
+    PIECE_TYPE(BOARD[move->to])
+  ];
+}
+
 static void update_pv(
   uint8_t ply,
   move_t *pv_row,
@@ -107,7 +129,7 @@ static void update_pv(
   pv_length[ply] = child_length + 1;
 }
 
-static eval_t pvs(
+static eval_t quiescence(
   uint8_t depth,
   uint8_t ply,
   eval_t alpha,
@@ -126,7 +148,195 @@ static eval_t pvs(
     return SEARCH_SCORE_DRAW;
   }
 
-  if (depth == 0 || ply == MAX_PLY) {
+  if (ply == MAX_PLY) {
+    return evaluate_position();
+  }
+
+  king_info_t *king_info = &king_info_stack[ply];
+
+  king_scan(POSITION_SIDE, king_info);
+
+  uint8_t in_check = king_info->n_checkers != 0;
+  eval_t stand_pat = -SEARCH_SCORE_INFINITY;
+
+  if (!in_check) {
+    stand_pat = evaluate_position();
+
+    if (depth == 0) {
+      return stand_pat;
+    }
+
+    if (stand_pat >= beta) {
+      return stand_pat;
+    }
+
+    if (stand_pat > alpha) {
+      alpha = stand_pat;
+    }
+  }
+
+  uint8_t has_pv_move =
+    follows_previous_pv &&
+    ply < previous_pv_length;
+  const move_t *pv_move =
+    has_pv_move ? &previous_pv[ply] : 0;
+
+  if (
+    has_pv_move &&
+    !in_check &&
+    !(pv_move->flags & (MF_CAPTURE | MF_PROMO))
+  ) {
+    has_pv_move = 0;
+  }
+
+  move_picker_t picker;
+  move_t *move_base = move_list_base[ply];
+
+  if (in_check) {
+    move_picker_init(
+      &picker,
+      move_base,
+      available_move_capacity(move_base),
+      killer_moves[ply],
+      pv_move,
+      has_pv_move,
+      0,
+      0
+    );
+  }
+  else {
+    move_picker_init_tactical(
+      &picker,
+      move_base,
+      available_move_capacity(move_base),
+      pv_move,
+      has_pv_move
+    );
+  }
+
+  move_t *child_row =
+    pv_row + (MAX_PLY - ply);
+
+  uint8_t legal_moves = 0;
+  uint8_t picker_status;
+  move_t *move;
+
+  while (
+    (picker_status = move_picker_next(&picker, &move)) ==
+    MOVE_PICKER_MOVE
+  ) {
+    if (!move_is_legal(move, king_info)) {
+      continue;
+    }
+
+    ++legal_moves;
+
+    uint8_t child_follows_previous_pv =
+      has_pv_move &&
+      moves_are_same(move, pv_move);
+
+    move_list_base[ply + 1] =
+      move_picker_end(&picker);
+
+    uint8_t delta_prune =
+      !in_check &&
+      !(move->flags & MF_PROMO) &&
+      stand_pat +
+        delta_capture_value(move) +
+        QUIESCENCE_DELTA_MARGIN <
+      alpha;
+
+    make_move(move, &undo_stack[ply]);
+
+    if (
+      delta_prune &&
+      !square_is_attacked(
+        POSITION_KING_SQUARE[
+          COLOR_INDEX(POSITION_SIDE)
+        ],
+        OPPOSITE_COLOR(POSITION_SIDE)
+      )
+    ) {
+      unmake_move(move, &undo_stack[ply]);
+      continue;
+    }
+
+    eval_t score = -quiescence(
+      depth == 0 ? 0 : depth - 1, // prevent nasty underflow bug
+      ply + 1,
+      -beta,
+      -alpha,
+      child_row,
+      child_follows_previous_pv
+    );
+
+    unmake_move(move, &undo_stack[ply]);
+
+    if (search_status != 0) {
+      return SEARCH_SCORE_DRAW; // placeholder value, gets thrown away
+    }
+
+    if (score <= alpha) {
+      continue;
+    }
+
+    alpha = score;
+
+    update_pv(
+      ply,
+      pv_row,
+      child_row,
+      move
+    );
+
+    if (alpha >= beta) {
+      break;
+    }
+  }
+
+  if (picker_status == MOVE_PICKER_OVERFLOW) {
+    search_status = 1;
+    return SEARCH_SCORE_DRAW;
+  }
+
+  if (in_check && legal_moves == 0) {
+    return -SEARCH_SCORE_MATE + ply;
+  }
+
+  return alpha;
+}
+
+static eval_t pvs(
+  uint8_t depth,
+  uint8_t ply,
+  eval_t alpha,
+  eval_t beta,
+  move_t *pv_row,
+  uint8_t follows_previous_pv
+)
+{
+  if (depth == 0) {
+    return quiescence(
+      QUIESCENCE_SOFT_MAX_DEPTH,
+      ply,
+      alpha,
+      beta,
+      pv_row,
+      follows_previous_pv
+    );
+  }
+
+  ++search_nodes;
+  pv_length[ply] = 0;
+
+  if (
+    POSITION_HALFMOVE >= 100 ||
+    repetition_search_is_threefold(ply)
+  ) {
+    return SEARCH_SCORE_DRAW;
+  }
+
+  if (ply == MAX_PLY) {
     return evaluate_position();
   }
 
