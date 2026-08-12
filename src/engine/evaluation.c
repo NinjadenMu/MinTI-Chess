@@ -38,7 +38,12 @@ enum {
 
   EVAL_TEMPO_BONUS = 10,
 
-  EVAL_ENDGAME_MATERIAL = 1010
+  EVAL_ENDGAME_MATERIAL = 1010,
+};
+
+enum {
+  EVAL_MOPUP_EDGE_WEIGHT = 25,
+  EVAL_MOPUP_KING_WEIGHT = 10
 };
 
 /*
@@ -159,6 +164,117 @@ static inline uint8_t relative_square(
   return PIECE_COLOR(piece) == COLOR_BLACK
     ? SQUARE_FLIP(square)
     : square;
+}
+
+static inline uint8_t axis_center_distance(uint8_t coordinate)
+{
+  return coordinate < 4
+    ? 4 - coordinate
+    : coordinate - 3;
+}
+
+static inline uint8_t square_chebyshev_distance(
+  uint8_t first,
+  uint8_t second
+)
+{
+  uint8_t first_file = SQUARE_FILE(first);
+  uint8_t second_file = SQUARE_FILE(second);
+  uint8_t first_rank = SQUARE_RANK(first);
+  uint8_t second_rank = SQUARE_RANK(second);
+
+  uint8_t file_distance = first_file > second_file
+    ? first_file - second_file
+    : second_file - first_file;
+
+  uint8_t rank_distance = first_rank > second_rank
+    ? first_rank - second_rank
+    : second_rank - first_rank;
+
+  return file_distance > rank_distance
+    ? file_distance
+    : rank_distance;
+}
+
+static uint8_t evaluate_mopup(eval_t *result)
+{
+  uint8_t winning_index;
+  uint8_t losing_index;
+
+  if (
+    PIECE_COUNT[0] == 2 &&
+    PIECE_COUNT[1] == 1
+  ) {
+    winning_index = 0;
+    losing_index = 1;
+  }
+  else if (
+    PIECE_COUNT[1] == 2 &&
+    PIECE_COUNT[0] == 1
+  ) {
+    winning_index = 1;
+    losing_index = 0;
+  }
+  else {
+    return 0;
+  }
+
+  uint8_t winning_king =
+    POSITION_KING_SQUARE[winning_index];
+  uint8_t losing_king =
+    POSITION_KING_SQUARE[losing_index];
+
+  uint8_t extra_square =
+    PIECE_LIST[winning_index][0];
+
+  if (extra_square == winning_king) {
+    extra_square = PIECE_LIST[winning_index][1];
+  }
+
+  uint8_t extra_type =
+    PIECE_TYPE(BOARD[extra_square]);
+
+  uint24_t winning_score;
+
+  if (extra_type == PIECE_QUEEN) {
+    winning_score = EVAL_QUEEN_VALUE;
+  }
+  else if (extra_type == PIECE_ROOK) {
+    winning_score = EVAL_ROOK_VALUE;
+  }
+  else {
+    return 0;
+  }
+
+  uint8_t center_distance =
+    axis_center_distance(SQUARE_FILE(losing_king)) +
+    axis_center_distance(SQUARE_RANK(losing_king));
+
+  uint8_t king_distance =
+    square_chebyshev_distance(
+      winning_king,
+      losing_king
+    );
+
+  winning_score +=
+    (uint24_t)center_distance *
+    EVAL_MOPUP_EDGE_WEIGHT;
+
+  winning_score +=
+    (uint24_t)(7 - king_distance) *
+    EVAL_MOPUP_KING_WEIGHT;
+
+  eval_t signed_score = (eval_t)winning_score;
+
+  if (
+    COLOR_INDEX(POSITION_SIDE) !=
+    winning_index
+  ) {
+    signed_score = -signed_score;
+  }
+
+  *result = signed_score + EVAL_TEMPO_BONUS;
+  return 1;
 }
 
 static inline uint24_t isolated_penalty(uint8_t count)
@@ -788,6 +904,12 @@ void evaluation_unmake_move(
 //__attribute__((noinline, optnone))
 eval_t evaluate_position(void)
 {
+  eval_t mopup_score;
+  if (evaluate_mopup(&mopup_score)) {
+    // special score to guarantee K+R or K+Q vs. K mate
+    return mopup_score;
+  }
+
   uint24_t *const score = EVAL_SCORE;
   uint24_t (*const pawn_king_score)[2] =
     EVAL_PAWN_KING_SCORE;
