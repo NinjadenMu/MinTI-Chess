@@ -1,0 +1,5 @@
+`starting_fens_large.txt` is a blend of 64,000 positions sampled from Stockfish's [books](https://github.com/official-stockfish/books), and is primarily used for evaluation function tuning.
+
+`starting_fens_small.txt` is a blend of 2000 positions sampled from the same source, but is not a strict subset of `starting_fens_large.txt`.  It is primarily used for engine testing.
+
+Both are composed of 60% `2moves_v1` (balanced positions only 2 full-moves deep, designed to give MinTI's tuner exposure to diverse but "on-policy" early opening play), 20% `UHO_4060_v4` (unbalanced positions from human play, designed to give MinTI's tuner exposure to decisive games and realistic positions), and 20% `8moves_v3.pgn` (real opening lines 8 full-moves deep, designed to give MinTI's tuner exposure to common late opening structures and plans).
