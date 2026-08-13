@@ -12,6 +12,7 @@
 #include "../config.h"
 #include "attack.h"
 #include "evaluation.h"
+#include "evaluation_constants.h"
 #include "legality.h"
 #include "make_move.h"
 #include "move_picker.h"
@@ -34,7 +35,13 @@
 #define ASPIRATION_WINDOW 50
 
 static const uint16_t delta_piece_values[7] = {
-  0, 100, 320, 0, 330, 500, 950
+  0,
+  EVAL_PAWN_VALUE,
+  EVAL_KNIGHT_VALUE,
+  0,
+  EVAL_BISHOP_VALUE,
+  EVAL_ROOK_VALUE,
+  EVAL_QUEEN_VALUE
 };
 
 static move_t pv_table[PV_TABLE_SIZE];
@@ -637,6 +644,31 @@ static void age_history(void)
     *value >>= 1;
     ++value;
   }
+}
+
+uint8_t search_quiescence_position(eval_t *score)
+{
+  for (uint8_t ply = 0; ply < MAX_PLY; ++ply) {
+    killer_moves[ply][0].from = SQUARE_NONE;
+    killer_moves[ply][1].from = SQUARE_NONE;
+  }
+
+  search_nodes = 0;
+  transposition_hits = 0;
+  search_status = 0;
+  previous_pv_length = 0;
+  move_list_base[0] = move_arena;
+
+  *score = quiescence(
+    QUIESCENCE_SOFT_MAX_DEPTH,
+    0,
+    -SEARCH_SCORE_INFINITY,
+    SEARCH_SCORE_INFINITY,
+    pv_table,
+    0
+  );
+
+  return search_status;
 }
 
 uint8_t search_position(

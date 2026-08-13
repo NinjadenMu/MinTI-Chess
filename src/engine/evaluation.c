@@ -9,141 +9,270 @@
 
 #include "../ce/memory_map.h"
 #include "evaluation.h"
+#include "evaluation_constants.h"
 #include "types.h"
 
 enum {
   EVAL_PHASE_OPENING = 0,
-  EVAL_PHASE_ENDGAME = 1,
-
-  /*
-   * PST offsets are subtracted from the true value, preserving
-   * p=100, n=320, b=330, r=500, q=950 with an unsigned PST.
-   */
-  EVAL_PAWN_BASE   = 80,
-  EVAL_KNIGHT_BASE = 270,
-  EVAL_BISHOP_BASE = 310,
-  EVAL_ROOK_BASE   = 495,
-  EVAL_QUEEN_BASE  = 930,
-
-  EVAL_PAWN_VALUE   = 100,
-  EVAL_KNIGHT_VALUE = 320,
-  EVAL_BISHOP_VALUE = 330,
-  EVAL_ROOK_VALUE   = 500,
-  EVAL_QUEEN_VALUE  = 950,
-
-  EVAL_DOUBLED_PAWN_PENALTY = 20,
-  EVAL_ISOLATED_PAWN_PENALTY = 20,
-  EVAL_BISHOP_PAIR_BONUS = 20,
-  EVAL_ROOK_OPEN_FILE_BONUS = 10,
-
-  EVAL_TEMPO_BONUS = 10,
-
-  EVAL_ENDGAME_MATERIAL = 1010,
+  EVAL_PHASE_ENDGAME = 1
 };
 
-enum {
-  EVAL_MOPUP_EDGE_WEIGHT = 25,
-  EVAL_MOPUP_KING_WEIGHT = 10
+#ifdef MINTI_HOST
+
+#include <math.h>
+
+static uint16_t host_piece_base[7];
+static uint16_t host_eval_scalars[EVAL_TUNABLE_SCALAR_COUNT];
+static uint8_t pst_source[EVAL_PST_COUNT][64];
+static uint8_t host_tunables_initialized;
+
+static const uint8_t host_pst_piece[EVAL_PST_COUNT] = {
+  PIECE_PAWN,
+  PIECE_PAWN,
+  PIECE_KNIGHT,
+  PIECE_BISHOP,
+  PIECE_ROOK,
+  PIECE_QUEEN,
+  PIECE_EMPTY,
+  PIECE_EMPTY
 };
 
-/*
- * Tables stored from white's perspective with a1 at index 0, offsets added 
- * to make all values unsigned
- * 
- * Otherwise, more or less taken straight from Tomasz Michniewski's Simplified 
- * Evaluation Function:
- * https://www.chessprogramming.org/Simplified_Evaluation_Function
- */
-static const uint8_t pst_source[8][64] = {
-  {
-    // pawn opening/middlegame
-    20, 20, 20, 20, 20, 20, 20, 20,
-    25, 30, 30,  0,  0, 30, 30, 25,
-    25, 15, 10, 20, 20, 10, 15, 25,
-    20, 20, 20, 40, 40, 20, 20, 20,
-    25, 25, 30, 45, 45, 30, 25, 25,
-    30, 30, 40, 50, 50, 40, 30, 30,
-    70, 70, 70, 70, 70, 70, 70, 70,
-    20, 20, 20, 20, 20, 20, 20, 20
-  },
-  {
-    // pawn endgame
-    20, 20, 20, 20, 20, 20, 20, 20,
-    20, 20, 20, 20, 20, 20, 20, 20,
-    25, 25, 30, 35, 35, 30, 25, 25,
-    30, 30, 35, 40, 40, 35, 30, 30,
-    40, 40, 45, 50, 50, 45, 40, 40,
-    55, 55, 60, 65, 65, 60, 55, 55,
-    85, 85, 90, 95, 95, 90, 85, 85,
-    20, 20, 20, 20, 20, 20, 20, 20
-  },
-  {
-    // knight
-     0, 10, 20, 20, 20, 20, 10,  0,
-    10, 30, 50, 55, 55, 50, 30, 10,
-    20, 55, 60, 65, 65, 60, 55, 20,
-    20, 50, 65, 70, 70, 65, 50, 20,
-    20, 50, 65, 70, 70, 65, 50, 20,
-    20, 55, 60, 65, 65, 60, 55, 20,
-    10, 30, 50, 55, 55, 50, 30, 10,
-     0, 10, 20, 20, 20, 20, 10,  0
-  },
-  {
-    // bishop
-     0, 10, 10, 10, 10, 10, 10,  0,
-    10, 25, 20, 20, 20, 20, 25, 10,
-    10, 30, 30, 30, 30, 30, 30, 10,
-    10, 20, 30, 30, 30, 30, 20, 10,
-    10, 20, 30, 30, 30, 30, 20, 10,
-    10, 30, 30, 30, 30, 30, 30, 10,
-    10, 25, 20, 20, 20, 20, 25, 10,
-     0, 10, 10, 10, 10, 10, 10,  0
-  },
-  {
-    // rook
-     5,  5,  5, 10, 10,  5,  5,  5,
-     0,  5,  5,  5,  5,  5,  5,  0,
-     5,  5,  5,  5,  5,  5,  5,  5,
-     5,  5,  5,  5,  5,  5,  5,  5,
-     5,  5,  5,  5,  5,  5,  5,  5,
-     5,  5,  5,  5,  5,  5,  5,  5,
-    10, 15, 15, 15, 15, 15, 15, 10,
-     5,  5,  5,  5,  5,  5,  5,  5
-  },
-  {
-    // queen
-     0, 10, 10, 15, 15, 10, 10,  0,
-    10, 20, 20, 20, 20, 20, 20, 10,
-    10, 20, 25, 25, 25, 25, 20, 10,
-    15, 20, 25, 25, 25, 25, 20, 15,
-    15, 20, 25, 25, 25, 25, 20, 15,
-    10, 20, 25, 25, 25, 25, 20, 10,
-    10, 20, 20, 20, 20, 20, 20, 10,
-     0, 10, 10, 15, 15, 10, 10,  0
-  },
-  {
-    // king opening/middlegame
-    70, 80, 60, 50, 50, 60, 80, 70,
-    70, 70, 50, 50, 50, 50, 70, 70,
-    40, 30, 30, 30, 30, 30, 30, 40,
-    30, 20, 20, 20, 20, 20, 20, 30,
-    20, 10, 10, 10, 10, 10, 10, 20,
-    10,  0,  0,  0,  0,  0,  0, 10,
-    10,  0,  0,  0,  0,  0,  0, 10,
-    10,  0,  0,  0,  0,  0,  0, 10
-  },
-  {
-    // king endgame
-     0, 20, 20, 20, 20, 20, 20,  0,
-    20, 30, 40, 50, 50, 40, 30, 20,
-    20, 40, 70, 80, 80, 70, 40, 20,
-    20, 40, 80, 90, 90, 80, 40, 20,
-    20, 40, 80, 90, 90, 80, 40, 20,
-    20, 40, 70, 80, 80, 70, 40, 20,
-    20, 30, 40, 50, 50, 40, 30, 20,
-     0, 20, 20, 20, 20, 20, 20,  0
+static void evaluation_host_reset_tunables(void)
+{
+  memset(host_piece_base, 0, sizeof(host_piece_base));
+
+  host_piece_base[PIECE_PAWN] = EVAL_PAWN_BASE;
+  host_piece_base[PIECE_KNIGHT] = EVAL_KNIGHT_BASE;
+  host_piece_base[PIECE_BISHOP] = EVAL_BISHOP_BASE;
+  host_piece_base[PIECE_ROOK] = EVAL_ROOK_BASE;
+  host_piece_base[PIECE_QUEEN] = EVAL_QUEEN_BASE;
+
+  host_eval_scalars[EVAL_TUNABLE_DOUBLED_PAWN] =
+    EVAL_DOUBLED_PAWN_PENALTY;
+  host_eval_scalars[EVAL_TUNABLE_ISOLATED_PAWN] =
+    EVAL_ISOLATED_PAWN_PENALTY;
+  host_eval_scalars[EVAL_TUNABLE_BISHOP_PAIR] =
+    EVAL_BISHOP_PAIR_BONUS;
+  host_eval_scalars[EVAL_TUNABLE_ROOK_OPEN_FILE] =
+    EVAL_ROOK_OPEN_FILE_BONUS;
+  host_eval_scalars[EVAL_TUNABLE_TEMPO] =
+    EVAL_TEMPO_BONUS;
+
+  memcpy(
+    pst_source,
+    evaluation_default_pst_source,
+    sizeof(pst_source)
+  );
+
+  host_tunables_initialized = 1;
+}
+
+static uint16_t rounded_parameter(
+  double value,
+  uint16_t maximum
+)
+{
+  if (value <= 0.0) {
+    return 0;
   }
-};
+
+  if (value >= maximum) {
+    return maximum;
+  }
+
+  return (uint16_t)lround(value);
+}
+
+static void decompose_piece_tables(
+  const double parameters[EVAL_TUNABLE_COUNT],
+  uint8_t piece_type,
+  uint8_t first_table,
+  uint8_t table_count // number of consecutive tables for `piece_type`
+)
+{
+  uint16_t minimum = UINT16_MAX;
+
+  for (
+    uint8_t table_offset = 0;
+    table_offset < table_count;
+    ++table_offset
+  ) {
+    uint8_t table = first_table + table_offset;
+
+    for (uint8_t square = 0; square < 64; ++square) {
+      uint16_t value = rounded_parameter(
+        parameters[table * 64 + square],
+        UINT16_MAX
+      );
+
+      if (value < minimum) {
+        minimum = value;
+      }
+    }
+  }
+
+  host_piece_base[piece_type] = minimum;
+
+  for (
+    uint8_t table_offset = 0;
+    table_offset < table_count;
+    ++table_offset
+  ) {
+    uint8_t table = first_table + table_offset;
+
+    for (uint8_t square = 0; square < 64; ++square) {
+      uint16_t value = rounded_parameter(
+        parameters[table * 64 + square],
+        UINT16_MAX
+      );
+
+      uint16_t offset = value - minimum;
+
+      pst_source[table][square] =
+        offset > UINT8_MAX
+          ? UINT8_MAX
+          : offset;
+    }
+  }
+}
+
+void evaluation_host_get_tunables(
+  double parameters[EVAL_TUNABLE_COUNT]
+)
+{
+  if (!host_tunables_initialized) {
+    evaluation_host_reset_tunables();
+  }
+
+  for (uint8_t table = 0; table < EVAL_PST_COUNT; ++table) {
+    uint8_t piece_type = host_pst_piece[table];
+    uint16_t base = piece_type == PIECE_EMPTY
+      ? 0
+      : host_piece_base[piece_type];
+
+    for (uint8_t square = 0; square < 64; ++square) {
+      parameters[(table << 6) | square] =
+        base + pst_source[table][square];
+    }
+  }
+
+  for (
+    uint8_t scalar = 0;
+    scalar < EVAL_TUNABLE_SCALAR_COUNT;
+    ++scalar
+  ) {
+    parameters[EVAL_TUNABLE_PST_COUNT + scalar] =
+      host_eval_scalars[scalar];
+  }
+}
+
+void evaluation_host_stage_tunables(
+  const double parameters[EVAL_TUNABLE_COUNT]
+)
+{
+  if (!host_tunables_initialized) {
+    evaluation_host_reset_tunables();
+  }
+
+  decompose_piece_tables(
+    parameters,
+    PIECE_PAWN,
+    EVAL_PST_INDEX_PAWN_OPENING,
+    2
+  );
+  decompose_piece_tables(
+    parameters,
+    PIECE_KNIGHT,
+    EVAL_PST_INDEX_KNIGHT,
+    1
+  );
+  decompose_piece_tables(
+    parameters,
+    PIECE_BISHOP,
+    EVAL_PST_INDEX_BISHOP,
+    1
+  );
+  decompose_piece_tables(
+    parameters,
+    PIECE_ROOK,
+    EVAL_PST_INDEX_ROOK,
+    1
+  );
+  decompose_piece_tables(
+    parameters,
+    PIECE_QUEEN,
+    EVAL_PST_INDEX_QUEEN,
+    1
+  );
+
+  // kings have no base value
+  for (
+    uint8_t table = EVAL_PST_INDEX_KING_OPENING;
+    table <= EVAL_PST_INDEX_KING_ENDGAME;
+    ++table
+  ) {
+    for (uint8_t square = 0; square < 64; ++square) {
+      pst_source[table][square] = rounded_parameter(
+        parameters[(table << 6) | square],
+        UINT8_MAX
+      );
+    }
+  }
+
+  for (
+    uint8_t scalar = 0;
+    scalar < EVAL_TUNABLE_SCALAR_COUNT;
+    ++scalar
+  ) {
+    host_eval_scalars[scalar] = rounded_parameter(
+      parameters[EVAL_TUNABLE_PST_COUNT + scalar],
+      UINT8_MAX
+    );
+  }
+}
+
+uint16_t evaluation_host_piece_base(uint8_t piece_type)
+{
+  return host_piece_base[piece_type];
+}
+
+uint16_t evaluation_host_scalar(uint8_t scalar)
+{
+  return host_eval_scalars[scalar];
+}
+
+uint8_t evaluation_host_pst(uint8_t table, uint8_t square)
+{
+  return pst_source[table][square];
+}
+
+#define EVAL_PAWN_BASE \
+  (host_piece_base[PIECE_PAWN])
+#define EVAL_KNIGHT_BASE \
+  (host_piece_base[PIECE_KNIGHT])
+#define EVAL_BISHOP_BASE \
+  (host_piece_base[PIECE_BISHOP])
+#define EVAL_ROOK_BASE \
+  (host_piece_base[PIECE_ROOK])
+#define EVAL_QUEEN_BASE \
+  (host_piece_base[PIECE_QUEEN])
+
+#define EVAL_DOUBLED_PAWN_PENALTY \
+  (host_eval_scalars[EVAL_TUNABLE_DOUBLED_PAWN])
+#define EVAL_ISOLATED_PAWN_PENALTY \
+  (host_eval_scalars[EVAL_TUNABLE_ISOLATED_PAWN])
+#define EVAL_BISHOP_PAIR_BONUS \
+  (host_eval_scalars[EVAL_TUNABLE_BISHOP_PAIR])
+#define EVAL_ROOK_OPEN_FILE_BONUS \
+  (host_eval_scalars[EVAL_TUNABLE_ROOK_OPEN_FILE])
+#define EVAL_TEMPO_BONUS \
+  (host_eval_scalars[EVAL_TUNABLE_TEMPO])
+
+#else
+
+#define pst_source evaluation_default_pst_source
+
+#endif
 
 static uint8_t *const pst_destinations[8] = {
   EVAL_PST_PAWN_OPENING,
@@ -786,10 +915,15 @@ void evaluation_clear(void)
   );
 }
 
-//__attribute__((noinline, optnone))
 void evaluation_init(void)
 {
-  for (uint8_t table = 0; table < 8; ++table) {
+#ifdef MINTI_HOST
+  if (!host_tunables_initialized) {
+    evaluation_host_reset_tunables();
+  }
+#endif
+
+  for (uint8_t table = 0; table < EVAL_PST_COUNT; ++table) {
     uint8_t *destination = pst_destinations[table];
     const uint8_t *source = pst_source[table];
 

@@ -1,7 +1,7 @@
 /**
  * @file perft_tests.h
  * 
- * Perft correctness and performance test harness
+ * Perft correctness and performance test harness, runs natively on calculator
  */
 
 #ifndef MINTI_TEST_PERFT_TESTS_H

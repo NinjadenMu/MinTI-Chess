@@ -29,6 +29,12 @@ typedef struct {
 } search_result_t;
 
 /**
+ * @brief Evaluates position with only quiescence
+ * @return 0 on success, nonzero otherwise
+ */
+uint8_t search_quiescence_position(eval_t *score);
+
+/**
  * @brief Iterative deepening PVS search
  * @return 0 on success, nonzero otherwise
  */
