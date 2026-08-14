@@ -31,19 +31,19 @@ enum {
 enum {
   /*
    * PST offsets are subtracted from the true value, preserving
-   * p=100, n=320, b=330, r=500, q=950 with an unsigned PST.
+   * their true values with an unsigned PST.
    */
-  EVAL_PAWN_BASE   = 80,
-  EVAL_KNIGHT_BASE = 270,
-  EVAL_BISHOP_BASE = 310,
-  EVAL_ROOK_BASE   = 495,
-  EVAL_QUEEN_BASE  = 930,
+  EVAL_PAWN_BASE = 76,
+  EVAL_KNIGHT_BASE = 225,
+  EVAL_BISHOP_BASE = 277,
+  EVAL_ROOK_BASE = 456,
+  EVAL_QUEEN_BASE = 932,
 
-  EVAL_DOUBLED_PAWN_PENALTY = 20,
-  EVAL_ISOLATED_PAWN_PENALTY = 20,
-  EVAL_BISHOP_PAIR_BONUS = 20,
-  EVAL_ROOK_OPEN_FILE_BONUS = 10,
-  EVAL_TEMPO_BONUS = 10,
+  EVAL_DOUBLED_PAWN_PENALTY = 8,
+  EVAL_ISOLATED_PAWN_PENALTY = 2,
+  EVAL_BISHOP_PAIR_BONUS = 37,
+  EVAL_ROOK_OPEN_FILE_BONUS = 23,
+  EVAL_TEMPO_BONUS = 0,
 
   // the below are not tuned
   EVAL_PAWN_VALUE   = 100,
