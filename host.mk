@@ -57,7 +57,7 @@ HOST_DEPFLAGS := -MMD -MP
 
 $(HOST_PROGRAM): $(HOST_PROGRAM_OBJECTS)
 	@mkdir -p $(dir $@)
-	$(HOST_CC) $(HOST_PROGRAM_OBJECTS)= -o $@
+	$(HOST_CC) $(HOST_PROGRAM_OBJECTS) -o $@
 
 $(HOST_LIBRARY): $(HOST_LIBRARY_OBJECTS)
 	@mkdir -p $(dir $@)
