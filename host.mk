@@ -3,17 +3,39 @@ HOST_CC ?= clang
 HOST_BUILD_DIR := build/host
 HOST_PROGRAM := $(HOST_BUILD_DIR)/minti-host
 
+HOST_SYSTEM := $(shell uname -s)
+
+ifeq ($(HOST_SYSTEM),Darwin)
+HOST_LIBRARY := $(HOST_BUILD_DIR)/libminti.dylib
+HOST_SHARED_LDFLAGS := -dynamiclib
+else
+HOST_LIBRARY := $(HOST_BUILD_DIR)/libminti.so
+HOST_SHARED_LDFLAGS := -shared
+endif
+
 ENGINE_SOURCES := $(wildcard src/engine/*.c)
 
-HOST_SOURCES := \
+HOST_COMMON_SOURCES := \
 	$(ENGINE_SOURCES) \
-	src/host/memory_map.c \
+	src/host/memory_map.c
+
+HOST_PROGRAM_SOURCES := \
+	$(HOST_COMMON_SOURCES) \
 	src/host/main.c
 
-HOST_OBJECTS := \
-	$(patsubst %.c,$(HOST_BUILD_DIR)/%.o,$(HOST_SOURCES))
+HOST_LIBRARY_SOURCES := \
+	$(HOST_COMMON_SOURCES) \
+	src/host/tuning_api.c
 
-HOST_DEPENDENCIES := $(HOST_OBJECTS:.o=.d)
+HOST_PROGRAM_OBJECTS := \
+	$(patsubst %.c,$(HOST_BUILD_DIR)/%.o,$(HOST_PROGRAM_SOURCES))
+
+HOST_LIBRARY_OBJECTS := \
+	$(patsubst %.c,$(HOST_BUILD_DIR)/%.o,$(HOST_LIBRARY_SOURCES))
+
+HOST_DEPENDENCIES := \
+	$(HOST_PROGRAM_OBJECTS:.o=.d) \
+	$(HOST_LIBRARY_OBJECTS:.o=.d)
 
 HOST_CPPFLAGS := \
 	-DMINTI_HOST=1 \
@@ -30,11 +52,19 @@ HOST_CFLAGS ?= \
 	-fno-strict-aliasing \
 	-fno-omit-frame-pointer
 
+HOST_CFLAGS += -fPIC
 HOST_DEPFLAGS := -MMD -MP
 
-$(HOST_PROGRAM): $(HOST_OBJECTS)
+$(HOST_PROGRAM): $(HOST_PROGRAM_OBJECTS)
 	@mkdir -p $(dir $@)
-	$(HOST_CC) $(HOST_OBJECTS) -o $@
+	$(HOST_CC) $(HOST_PROGRAM_OBJECTS)= -o $@
+
+$(HOST_LIBRARY): $(HOST_LIBRARY_OBJECTS)
+	@mkdir -p $(dir $@)
+	$(HOST_CC) \
+		$(HOST_SHARED_LDFLAGS) \
+		$(HOST_LIBRARY_OBJECTS) \
+		-o $@
 
 $(HOST_BUILD_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
@@ -45,9 +75,13 @@ $(HOST_BUILD_DIR)/%.o: %.c
 		-c $< \
 		-o $@
 
-.PHONY: all clean
+.PHONY: all library clean
 
-all: $(HOST_PROGRAM)
+all: $(HOST_PROGRAM) $(HOST_LIBRARY)
+
+library: $(HOST_LIBRARY)
 
 clean:
 	rm -rf $(HOST_BUILD_DIR)
+
+-include $(HOST_DEPENDENCIES)
