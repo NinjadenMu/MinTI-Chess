@@ -37,10 +37,19 @@ uint8_t search_quiescence_position(eval_t *score);
 /**
  * @brief Iterative deepening PVS search
  * @return 0 on success, nonzero otherwise
+ * 
+ * This does not implement fully interruptible search, but will not start 
+ * a new deeper search after exceeding the budget.  Therefore, 
+ * `time_budget_seconds` acts as a soft bound on time, but may be exceeded 
+ * by a significant amount once since searches times increase exponentially.
+ * 
+ * Passing 0 to `time_budget_seconds` will cause it to be ignored, and the 
+ * search will terminate normally once reaching `max_depth`.
  */
 uint8_t search_position(
   uint8_t max_depth,
-  search_result_t *result
+  search_result_t *result,
+  uint24_t time_budget_seconds
 );
 
 const move_t *get_principal_variation(void);

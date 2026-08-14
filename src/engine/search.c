@@ -7,6 +7,7 @@
 #include "debug.h"
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #include "../ce/memory_map.h"
 #include "../config.h"
@@ -673,7 +674,8 @@ uint8_t search_quiescence_position(eval_t *score)
 
 uint8_t search_position(
   uint8_t max_depth,
-  search_result_t *result
+  search_result_t *result,
+  uint24_t time_budget_seconds
 )
 {
   tt_clear();
@@ -704,11 +706,20 @@ uint8_t search_position(
     max_depth = MAX_PLY;
   }
 
+  clock_t time_start = clock();
   for (
     uint8_t depth = 1;
     depth <= max_depth;
     ++depth
   ) {
+    if (
+      time_budget_seconds != 0 &&
+      (clock() - time_start) / CLOCKS_PER_SEC + 1 >
+      time_budget_seconds
+    ) {
+      break;
+    }
+
     age_history();
 
     eval_t alpha = -SEARCH_SCORE_INFINITY;
