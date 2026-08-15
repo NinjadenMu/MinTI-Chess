@@ -323,7 +323,8 @@ int minti_host_selfplay(
     if (
       search_position(
         SELFPLAY_DEPTH,
-        &search
+        &search,
+        0
       ) != 0
     ) {
       return MINTI_HOST_SEARCH_FAILED;

@@ -1,78 +1,57 @@
 /**
  * @file main.c
- * 
- * Sets up workspaces for engine (e.g. making sure VRAM is available), 
- * implements top-most game loop
+ *
+ * Initializes calculator resources and launches the MinTI game.
  */
 
-#include <stdint.h>
-
-#include "debug.h"
 #include <graphx.h>
+#include <stdint.h>
 #include <ti/getcsc.h>
 
+#include "ce/game.h"
 #include "engine/engine.h"
 #include "engine/position.h"
-#include "engine/search.h"
-//#include "test/perft_tests.h"
 
-/*
- * Sets up workspaces for engine, main control loop
- */
+static const uint16_t minti_palette[] = {
+  gfx_RGBTo1555(0, 0, 0),
+  gfx_RGBTo1555(145, 145, 145),
+  gfx_RGBTo1555(105, 185, 255),
+  gfx_RGBTo1555(145, 25, 35)
+};
+
 int main(void)
 {
-  uint8_t result;
-
-  /*
-   * Set calculator to 8bpp mode and select one frame buffer, 
-   * freeing the other frame buffer for use by MinTI
-   */
   gfx_Begin();
   gfx_SetDrawScreen();
   gfx_SetDefaultPalette(gfx_8bpp);
+  gfx_SetPalette(
+    minti_palette,
+    sizeof(minti_palette),
+    0
+  );
 
-  gfx_FillScreen(255);
   gfx_SetTextFGColor(0);
   gfx_SetTextBGColor(255);
   gfx_SetTextTransparentColor(255);
 
-  result = engine_init();
+  uint8_t status = engine_init();
 
-  if (result) {
-    dbg_printf("Engine initialization failed.\n");
-    gfx_PrintStringXY("Engine initialization failed.", 8, 8);
-  }
-  else {
-    dbg_printf("MinTI Chess initialized.\n");
-    gfx_PrintStringXY("MinTI Chess initialized.", 8, 8);
-
-    position_from_fen("r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3");
-    search_result_t result;
-    search_position(4, &result);
-
-    gfx_SetTextXY(8, 32);
-    gfx_PrintUInt(result.best_move.from, 3);
-    gfx_SetTextXY(8, 64);
-    gfx_PrintUInt(result.best_move.to, 3);
-    gfx_SetTextXY(8, 96);
-    gfx_PrintUInt(result.nodes, 10);
-    gfx_SetTextXY(8, 128);
-    gfx_PrintUInt(result.transposition_hits, 10);
-    gfx_SetTextXY(8, 160);
-    gfx_PrintInt(result.score, 5);
-    //run_perft_tests();
-
+  if (status) {
+    gfx_FillScreen(255);
     gfx_PrintStringXY(
-      "Press any key to exit.",
-      8,
-      216
+      "Engine initialization failed.",
+      24,
+      96
     );
+    gfx_PrintStringXY("Press any key.", 24, 120);
 
     while (!os_GetCSC()) {
     }
   }
+  else {
+    status = game_run();
+  }
 
   gfx_End();
-
-  return result;
+  return status;
 }
