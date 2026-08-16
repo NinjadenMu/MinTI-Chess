@@ -21,7 +21,8 @@ HOST_COMMON_SOURCES := \
 
 HOST_PROGRAM_SOURCES := \
 	$(HOST_COMMON_SOURCES) \
-	src/host/main.c
+	src/host/main.c \
+	src/host/game.c
 
 HOST_LIBRARY_SOURCES := \
 	$(HOST_COMMON_SOURCES) \

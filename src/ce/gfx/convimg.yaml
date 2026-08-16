@@ -1,0 +1,32 @@
+palettes:
+  - name: sprite_palette
+    fixed-entries:
+      - color: {index: 0, r: 255, g: 0, b: 128}
+      - color: {index: 1, r: 255, g: 255, b: 255}
+    images: automatic
+
+converts:
+  - name: sprites
+    palette: sprite_palette
+    transparent-color-index: 0
+    images:
+      - bishop_24_w.png
+      - bishop_24_b.png
+      - king_24_w.png
+      - king_24_b.png
+      - knight_24_w.png
+      - knight_24_b.png
+      - pawn_24_w.png
+      - pawn_24_b.png
+      - queen_24_w.png
+      - queen_24_b.png
+      - rook_24_w.png
+      - rook_24_b.png
+
+outputs:
+  - type: c
+    include-file: gfx.h
+    palettes:
+      - sprite_palette
+    converts:
+      - sprites

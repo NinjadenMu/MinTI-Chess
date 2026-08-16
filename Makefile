@@ -14,7 +14,6 @@ SRCDIR := src/engine
 GFXDIR := src/ce/gfx
 
 EXTRA_C_SOURCES := \
-	src/main.c \
 	$(wildcard src/ce/*.c) \
 	$(wildcard src/ce/gfx/*.c) \
 	$(wildcard src/test/*.c)

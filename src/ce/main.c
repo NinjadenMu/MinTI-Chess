@@ -8,9 +8,9 @@
 #include <stdint.h>
 #include <ti/getcsc.h>
 
-#include "ce/game.h"
-#include "engine/engine.h"
-#include "engine/position.h"
+#include "game.h"
+#include "../engine/engine.h"
+#include "../engine/position.h"
 
 int main(void)
 {
