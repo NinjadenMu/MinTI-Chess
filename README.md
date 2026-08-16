@@ -6,7 +6,7 @@ MinTI is an ambitious engine, implementing:
 - Principal variation search
 - Quiescence search with stand-pat and delta pruning
 - 64KB transposition table
-- Strong move ordering (killers, history heuristic, MVV-LVA, PV, TT moves)
+- Lazy movegen and strong ordering (killers, history heuristic, MVV-LVA, PV, TT moves)
 - Null move pruning
 - Autotuned staged evaluation
 
@@ -25,7 +25,7 @@ Together, this allows MinTI to defeat strong existing engines such as [Chess84](
 
 Playing MinTI myself on my calculator, I'd estimate its strength at **2000-2100** chess[dot]com blitz, and it's a seriously challenging opponent for me.
 
-Stockfish comparisions suggest that MinTI is even stronger than that: 
+Stockfish comparisions put MinTI in the same ballpark: 
 | Opponent         | MinTI Score | MinTI's Estimated Elo |
 |------------------|------------------------|------------------------|
 | Stockfish UCI 1900 | 66 wins, 13 draws, 21 losses | **2068.4** (+168.4) |
@@ -47,7 +47,7 @@ Install from [ticalc.org](), or clone and build with `make gfx` followed by `mak
 
 You can directly use your keypad to interact with MinTI's calculator GUI.  Letters can be typed without entering "alpha" mode.
 
-![Opera game on calculator](assets/calculator_opera_game.png)
+![MinTI playing on the calculator](assets/minti_thinking.png)
 
 ## Future Work
 MinTI's non-engine feature set are minimal right now.  I'd love to be able to add more features like saving games, loading custom positions, and new customization options.
