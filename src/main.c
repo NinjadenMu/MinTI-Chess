@@ -12,27 +12,13 @@
 #include "engine/engine.h"
 #include "engine/position.h"
 
-static const uint16_t minti_palette[] = {
-  gfx_RGBTo1555(0, 0, 0),
-  gfx_RGBTo1555(145, 145, 145),
-  gfx_RGBTo1555(105, 185, 255),
-  gfx_RGBTo1555(145, 25, 35)
-};
-
 int main(void)
 {
   gfx_Begin();
   gfx_SetDrawScreen();
   gfx_SetDefaultPalette(gfx_8bpp);
-  gfx_SetPalette(
-    minti_palette,
-    sizeof(minti_palette),
-    0
-  );
 
-  gfx_SetTextFGColor(0);
-  gfx_SetTextBGColor(255);
-  gfx_SetTextTransparentColor(255);
+  game_init_graphics();
 
   uint8_t status = engine_init();
 
@@ -49,6 +35,7 @@ int main(void)
     }
   }
   else {
+    //position_from_fen("1n1Rkb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2K5 b k - 1 17");
     status = game_run();
   }
 

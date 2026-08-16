@@ -18,13 +18,13 @@
 #include "../engine/storage.h"
 #include "../engine/types.h"
 #include "game.h"
+#include "gfx/gfx.h"
 #include "memory_map.h"
 
 enum {
-  SCREEN_FOREGROUND = 0,
-  SCREEN_LIGHT_DOT = 1,
-  SCREEN_WHITE_PIECE = 2,
-  SCREEN_BLACK_PIECE = 3,
+  SCREEN_FOREGROUND = 252,
+  SCREEN_LIGHT_SQUARE = 253,
+  SCREEN_DARK_SQUARE = 254,
   SCREEN_BACKGROUND = 255,
 
   BOARD_X = 24,
@@ -59,6 +59,34 @@ enum {
   MOVE_ERROR
 };
 
+void game_init_graphics(void)
+{
+  static const uint16_t interface_palette[] = {
+    gfx_RGBTo1555(0x16, 0x18, 0x1D),
+    gfx_RGBTo1555(0xC9, 0xC4, 0xA5),
+    gfx_RGBTo1555(0x72, 0x7A, 0x63),
+    gfx_RGBTo1555(0xFF, 0xFF, 0xFF)
+  };
+
+  gfx_SetPalette(
+    sprite_palette,
+    sizeof_sprite_palette,
+    0
+  );
+
+  gfx_SetPalette(
+    interface_palette,
+    sizeof(interface_palette),
+    SCREEN_FOREGROUND
+  );
+
+  gfx_SetTransparentColor(0);
+
+  gfx_SetTextFGColor(SCREEN_FOREGROUND);
+  gfx_SetTextBGColor(SCREEN_BACKGROUND);
+  gfx_SetTextTransparentColor(SCREEN_BACKGROUND);
+}
+
 static uint8_t wait_key(void)
 {
   uint8_t key;
@@ -72,47 +100,33 @@ static uint8_t wait_key(void)
   return key;
 }
 
-static char piece_character(uint8_t piece)
+static const gfx_sprite_t *piece_sprite(uint8_t piece)
 {
-  char character;
+  uint8_t black =
+    PIECE_COLOR(piece) == COLOR_BLACK;
 
   switch (PIECE_TYPE(piece)) {
-    case PIECE_EMPTY:
-      return '.';
-
     case PIECE_PAWN:
-      character = 'P';
-      break;
+      return black ? pawn_24_b : pawn_24_w;
 
     case PIECE_KNIGHT:
-      character = 'N';
-      break;
+      return black ? knight_24_b : knight_24_w;
 
     case PIECE_KING:
-      character = 'K';
-      break;
+      return black ? king_24_b : king_24_w;
 
     case PIECE_BISHOP:
-      character = 'B';
-      break;
+      return black ? bishop_24_b : bishop_24_w;
 
     case PIECE_ROOK:
-      character = 'R';
-      break;
+      return black ? rook_24_b : rook_24_w;
 
     case PIECE_QUEEN:
-      character = 'Q';
-      break;
+      return black ? queen_24_b : queen_24_w;
 
     default:
-      return '?';
+      return 0;
   }
-
-  if (PIECE_COLOR(piece) == COLOR_BLACK) {
-    character += 'a' - 'A';
-  }
-
-  return character;
 }
 
 static void clear_side(void)
@@ -129,8 +143,8 @@ static void clear_side(void)
 static void draw_board(uint8_t player_side)
 {
   gfx_FillScreen(SCREEN_BACKGROUND);
-
   gfx_SetTextScale(1, 1);
+  gfx_SetTextFGColor(SCREEN_FOREGROUND);
 
   for (uint8_t row = 0; row < 8; ++row) {
     uint8_t rank = player_side == COLOR_WHITE
@@ -156,8 +170,6 @@ static void draw_board(uint8_t player_side)
     gfx_PrintChar('a' + file);
   }
 
-  gfx_SetTextScale(2, 2);
-
   for (uint8_t row = 0; row < 8; ++row) {
     uint8_t rank = player_side == COLOR_WHITE
       ? 7 - row
@@ -169,30 +181,32 @@ static void draw_board(uint8_t player_side)
         : 7 - column;
       uint8_t square = SQUARE(file, rank);
       uint8_t piece = BOARD[square];
-      uint8_t text_color;
+      uint24_t x =
+        BOARD_X + column * BOARD_CELL_SIZE;
+      uint8_t y =
+        BOARD_Y + row * BOARD_CELL_SIZE;
 
-      if (piece == PIECE_EMPTY) {
-        text_color = (file + rank) & 1
-          ? SCREEN_LIGHT_DOT
-          : SCREEN_FOREGROUND;
-      }
-      else {
-        text_color = PIECE_COLOR(piece) == COLOR_WHITE
-          ? SCREEN_WHITE_PIECE
-          : SCREEN_BLACK_PIECE;
-      }
-
-      gfx_SetTextFGColor(text_color);
-      gfx_SetTextXY(
-        BOARD_X + column * BOARD_CELL_SIZE + 4,
-        BOARD_Y + row * BOARD_CELL_SIZE + 4
+      gfx_SetColor(
+        ((file + rank) & 1)
+          ? SCREEN_LIGHT_SQUARE
+          : SCREEN_DARK_SQUARE
       );
-      gfx_PrintChar(piece_character(piece));
+      gfx_FillRectangle_NoClip(
+        x,
+        y,
+        BOARD_CELL_SIZE,
+        BOARD_CELL_SIZE
+      );
+
+      if (piece != PIECE_EMPTY) {
+        gfx_TransparentSprite_NoClip(
+          piece_sprite(piece),
+          x,
+          y
+        );
+      }
     }
   }
-
-  gfx_SetTextFGColor(SCREEN_FOREGROUND);
-  gfx_SetTextScale(1, 1);
 }
 
 static void draw_input(

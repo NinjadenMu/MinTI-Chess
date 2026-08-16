@@ -10,6 +10,11 @@
 #include <stdint.h>
 
 /**
+ * @brief Installs sprites and palette
+ */
+void game_init_graphics(void);
+
+/**
  * @brief game state management and GUI
  */
 uint8_t game_run(void);
