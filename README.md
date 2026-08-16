@@ -18,18 +18,18 @@ It's explicitly optimized and designed for the TI-84 Plus CE calculator, and is 
 
 Together, this allows MinTI to defeat strong existing engines such as [Chess84](https://github.com/thewarrenjames/Chess84) and [ChessCE/ChessCCE](https://www.ticalc.org/archives/files/fileinfo/468/46800.html)<sup>*</sup>.
 
-| Opponent         | MinTI as White | MinTI as Black |
+| Opponent         | MinTI Score as White | MinTI Score as Black |
 |------------------|------------------------|------------------------|
-| Chess84          | 99%: 98 wins, 2 draws, 0 losses | 97%: 94 wins, 6 draws, 0 losses |
-| ChessCE/ChessCCE | 97%: 94 wins, 6 draws, 0 losses | 98.5%: 97 wins, 3 draws, 0 losses |
+| Chess84          | 98 wins, 2 draws, 0 losses | 94 wins, 6 draws, 0 losses |
+| ChessCE/ChessCCE | 94 wins, 6 draws, 0 losses | 97 wins, 3 draws, 0 losses |
 
 Playing MinTI myself on my calculator, I'd estimate its strength at **2000-2100** chess[dot]com blitz, and it's a seriously challenging opponent for me.
 
 Stockfish comparisions suggest that MinTI is even stronger than that: 
 | Opponent         | MinTI Score | MinTI's Estimated Elo |
 |------------------|------------------------|------------------------|
-| Stockfish UCI 1900 | 72.5%: 66 wins, 13 draws, 21 losses | **2068.4** (+168.4) |
-| Stockfish UCI 2100 | 52%: 41 wins, 22 draws, 37 losses | **2139** (+13.9) |
+| Stockfish UCI 1900 | 66 wins, 13 draws, 21 losses | **2068.4** (+168.4) |
+| Stockfish UCI 2100 | 41 wins, 22 draws, 37 losses | **2113.9** (+13.9) |
 
 <sup>*</sup> 200 games were played from 100 balanced early opening positions, so each engine could play both sides of the position.  Starting positions and game PGNs [here (Pastebin)](https://pastebin.com/u/NinjadenMu/1/vAAY1jwN).  
 Interestingly, Chess84 beats ChessCE by a significant margin with 67 wins, 117 draws, and 16 losses, so the comparision with MinTI is somewhat non-monotonic.
