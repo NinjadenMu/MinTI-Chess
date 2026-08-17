@@ -1,6 +1,8 @@
 # MinTI-Chess 🍃
 MinTI is the world's strongest chess engine for the TI-84 Plus CE graphing calculator, running natively on a 24-bit ADL CPU with under 128KiB of RAM.
 
+Calculator Download: [Cemetech](https://www.cemetech.net/downloads/files/3055/x4121)
+
 ## Features
 MinTI is an ambitious engine, implementing:
 - Principal variation search
@@ -43,7 +45,7 @@ Clone and build with `make -f host.mk`.  Run the created `build/host/minti-host`
 Upon running `minti-host`, you will have the option to either simulate the calculator's capabilities or play at the host's full capacity, which is easily at the level of strong masters.
 
 #### Calculator:
-Install from [ticalc.org](), or clone and build with `make gfx` followed by `make` using the [CE Toolchain](https://ce-programming.github.io/toolchain/static/getting-started.html).  Both methods require the CE Libraries (`clibs.8xg`) which may be downloaded [here](https://github.com/CE-Programming/libraries/releases/tag/v15.0).  Recent Texas Instruments OS versions block user assembly execution, so you may also need to install the [arTIfiCE](https://github.com/YvanTT/arTIfiCE/releases/tag/v2.1) launcher.  Send all required files to your calculator using TI Connect CE.
+Install from [Cemetech](https://www.cemetech.net/downloads/files/3055/x4121), or clone and build with `make gfx` followed by `make` using the [CE Toolchain](https://ce-programming.github.io/toolchain/static/getting-started.html).  Both methods require the CE Libraries (`clibs.8xg`) which may be downloaded [here](https://github.com/CE-Programming/libraries/releases/tag/v15.0).  Recent Texas Instruments OS versions block user assembly execution, so you may also need to install the [arTIfiCE](https://github.com/YvanTT/arTIfiCE/releases/tag/v2.1) launcher.  Send all required files to your calculator using TI Connect CE.
 
 You can directly use your keypad to interact with MinTI's calculator GUI.  Letters can be typed without entering "alpha" mode.
 
