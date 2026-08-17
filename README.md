@@ -18,20 +18,20 @@ It's explicitly optimized and designed for the TI-84 Plus CE calculator, and is 
 - Incrementally maintained evaluation
 - Amortized legality checking
 
-Together, this allows MinTI to defeat strong existing engines such as [Chess84](https://github.com/thewarrenjames/Chess84) and [ChessCE/ChessCCE](https://www.ticalc.org/archives/files/fileinfo/468/46800.html)<sup>*</sup>.
+Together, this allows MinTI to defeat strong existing calculator engines such as [Chess84](https://github.com/thewarrenjames/Chess84) and [ChessCE/ChessCCE](https://www.ticalc.org/archives/files/fileinfo/468/46800.html)<sup>*</sup>.
 
 | Opponent         | MinTI Score as White | MinTI Score as Black |
 |------------------|------------------------|------------------------|
 | Chess84          | 98 wins, 2 draws, 0 losses | 94 wins, 6 draws, 0 losses |
 | ChessCE/ChessCCE | 94 wins, 6 draws, 0 losses | 97 wins, 3 draws, 0 losses |
 
-Playing MinTI myself on my calculator, I'd estimate its strength at **2000-2100** chess[dot]com blitz, and it's a seriously challenging opponent for me.
+Playing MinTI myself on the calculator, I'd estimate its strength at **2100** chess[dot]com blitz (or higher), since it beats me and my friends (2000-2200) regularly.
 
-Stockfish comparisions put MinTI in the same ballpark: 
-| Opponent         | MinTI Score | MinTI's Estimated Elo |
-|------------------|------------------------|------------------------|
-| Stockfish UCI 1900 | 66 wins, 13 draws, 21 losses | **2068.4** (+168.4) |
-| Stockfish UCI 2100 | 41 wins, 22 draws, 37 losses | **2113.9** (+13.9) |
+Stockfish comparisions put MinTI's calculator build in the same ballpark: 
+| Opponent         | MinTI Score | MinTI's Estimated Elo | 95% CI |
+|------------------|------------------------|------------------------|----|
+| Stockfish UCI 1900 | 66 wins, 13 draws, 21 losses | **2068.4** | 2003.4 - 2146.8 |
+| Stockfish UCI 2100 | 41 wins, 22 draws, 37 losses | **2113.9** | 2053.2 - 2175.4 |
 
 <sup>*</sup> 200 games were played from 100 balanced early opening positions, so each engine could play both sides of the position.  Starting positions and game PGNs [here (Pastebin)](https://pastebin.com/u/NinjadenMu/1/vAAY1jwN).  
 Interestingly, Chess84 beats ChessCE by a significant margin with 67 wins, 117 draws, and 16 losses, so the comparision with MinTI is somewhat non-monotonic.
@@ -52,6 +52,6 @@ You can directly use your keypad to interact with MinTI's calculator GUI.  Lette
 ![MinTI playing on the calculator](assets/minti_thinking.png)
 
 ## Future Work
-MinTI's non-engine feature set are minimal right now.  I'd love to be able to add more features like saving games, loading custom positions, and new customization options.
+MinTI's non-engine feature set is minimal right now.  I'd love to be able to add more features like saving games, loading custom positions, and new customization options.
 
 MinTI also doesn't implement late move reductions or futility pruning.  This is intentional, since reductions are tactically risky with MinTI's limited search depth on the calculator (4-5 ply), and would likely have to be quite aggressive to actually improve MinTI's search depth consistently.  That being said, I think they might work with some tuning and experimentation, so this will be a good excuse for me to revisit in the future :)
